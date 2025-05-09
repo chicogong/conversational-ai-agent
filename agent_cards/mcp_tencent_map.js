@@ -2,16 +2,16 @@ module.exports = {
     CONFIG: {
         // Tencent Cloud API client configuration
         apiConfig: {
-            secretId: "xx",      // [Required] Replace with your actual SecretId
-            secretKey: "xx",     // [Required] Replace with your actual SecretKey
-            region: "ap-beijing", // API access to the nearest region
-            endpoint: "trtc.tencentcloudapi.com"
+            secretId: process.env.TENCENT_SECRET_ID,      // [Required] Replace with your actual SecretId
+            secretKey: process.env.TENCENT_SECRET_KEY,     // [Required] Replace with your actual SecretKey
+            region: process.env.TENCENT_REGION || "ap-guangzhou", // API access to the nearest region
+            endpoint: process.env.TENCENT_ENDPOINT || "trtc.tencentcloudapi.com"
         },
     
         // TRTC configuration
         trtcConfig: {
-            sdkAppId: 1400000000,     // [Required] Replace with your actual SDKAppId
-            secretKey: "xx",          // [Required] Replace with your actual SecretKey
+            sdkAppId: process.env.TENCENT_SDK_APP_ID,     // [Required] Replace with your actual SDKAppId
+            secretKey: process.env.TENCENT_SECRET_KEY,          // [Required] Replace with your actual SecretKey
             expireTime: 10 * 60 * 60  // User signature 10 hours expiration time (seconds)
         },
 
@@ -44,10 +44,10 @@ module.exports = {
         // LLM configuration
         LLMConfig: {
             LLMType: "mcp",  // mcp protocol
-            Model: "xxx",  // [Required] LLM model Name
-            LLMAPIUrl: "https://api.xxx.con/v1/chat/completions", // [Required] Your LLM API Url
-            LLMAPIKey: "xxx",   // [Required] Replace with your actual LLM APIKey
-            MCPServerUrl: "https://mcp.map.qq.com/sse?key=xxxx", // [Required] MCP Server Url for Tencent Map
+            Model: process.env.LLM_MODEL,  // [Required] LLM model Name
+            LLMAPIUrl: process.env.LLM_API_URL, // [Required] Your LLM API Url
+            LLMAPIKey: process.env.LLM_API_KEY,   // [Required] Replace with your actual LLM APIKey
+            MCPServerUrl: process.env.MCP_SERVER_URL, // [Required] MCP Server Url for Tencent Map
             History: 5,      // Number of LLM context entries
             Timeout: 3,      // LLM timeout time
             Streaming: true,  // Need streaming
@@ -57,10 +57,10 @@ module.exports = {
         // Text-to-speech configuration
         TTSConfig: {
             TTSType: "minimax",  // TTS provider
-            GroupId: "18000000000",
-            APIKey: "xxxx",   // [Required] Replace with your actual LLM APIKey
-            VoiceType: "xxx",  // Use real customer service voice clone
-            APIUrl: "https://api.minimax.chat/v1/t2a_v2",
+            GroupId: process.env.MINIMAX_TTS_GROUP_ID,
+            APIKey: process.env.MINIMAX_TTS_API_KEY,   // [Required] Replace with your actual LLM APIKey
+            VoiceType: process.env.MINIMAX_TTS_VOICE_TYPE,  // Use real customer service voice clone
+            APIUrl: "http://api.minimax.chat/v1/t2a_v2",
             Model: "speech-01-turbo",
             Speed: 1  // Speech speed adjustment for different scenarios
         }    

@@ -3,10 +3,12 @@
  */
 
 // Application state
-let taskId = null;
-let muteState = false;
-let selectedAgent = null;
-let agentsCache = {}; // Cache to store all agent information
+const appState = {
+  taskId: null,
+  muteState: false,
+  selectedAgent: null,
+  agentsCache: {} // Cache to store all agent information
+};
 
 /**
  * ===========================================
@@ -20,17 +22,17 @@ let agentsCache = {}; // Cache to store all agent information
 async function startConversation() {
   try {
     // Validate agent selection
-    if (!selectedAgent) {
+    if (!appState.selectedAgent) {
       addSystemMessage("Please select an AI assistant first");
       return;
     }
     
     // Disable start button while connecting
-    startButton.disabled = true;
+    elements.startButton.disabled = true;
     updateStatus('room', "Connecting...");
 
     // Get user info from API module with selected agent
-    const { userInfo } = await initChatConfig(selectedAgent);
+    const { userInfo } = await initChatConfig(appState.selectedAgent);
     
     const { sdkAppId, userSig, userId, roomId, robotId } = userInfo;
 
@@ -49,21 +51,21 @@ async function startConversation() {
 
     // Start AI conversation - Fix: Pass userInfo directly without extra nesting
     const response = await startAIConversation(JSON.stringify({ userInfo }));
-    taskId = response.TaskId;
-    console.log('AI conversation started with task ID:', taskId);
+    appState.taskId = response.TaskId;
+    console.log('AI conversation started with task ID:', appState.taskId);
 
     // Enable control buttons
-    endButton.disabled = false;
-    sendButton.disabled = false;
-    interruptButton.disabled = false;
-    muteButton.disabled = false;
+    elements.endButton.disabled = false;
+    elements.sendButton.disabled = false;
+    elements.interruptButton.disabled = false;
+    elements.muteButton.disabled = false;
 
     // Add call-active class to hide agent selection
     document.getElementById('app').classList.add('call-active');
   } catch (error) {
     console.error("Failed to start conversation:", error);
     updateStatus('room', "Connection Failed");
-    startButton.disabled = false;
+    elements.startButton.disabled = false;
 
     // Display error in chat
     addSystemMessage(`Failed to start conversation: ${error.message}`);
@@ -75,20 +77,20 @@ async function startConversation() {
  */
 async function stopConversation() {
   // Disable buttons while disconnecting
-  endButton.disabled = true;
-  sendButton.disabled = true;
-  interruptButton.disabled = true;
-  muteButton.disabled = true;
-  muteButton.textContent = 'Mute';
-  muteButton.classList.remove('muted');
-  muteState = false;
+  elements.endButton.disabled = true;
+  elements.sendButton.disabled = true;
+  elements.interruptButton.disabled = true;
+  elements.muteButton.disabled = true;
+  elements.muteButton.textContent = 'Mute';
+  elements.muteButton.classList.remove('muted');
+  appState.muteState = false;
   updateStatus('room', "Disconnecting...");
 
   try {
     // Stop the AI conversation task
-    if (taskId) {
+    if (appState.taskId) {
       await stopAIConversation(JSON.stringify({
-        TaskId: taskId,
+        TaskId: appState.taskId,
       }));
       console.log('AI conversation stopped successfully');
     }
@@ -110,7 +112,7 @@ async function stopConversation() {
   destroyTRTCClient();
 
   // Reset UI state and metrics data
-  taskId = null;
+  appState.taskId = null;
   resetMetrics();
   resetUI();
 
@@ -137,14 +139,14 @@ function showAgentInfo(agentId) {
     }
     
     // Check if we have agent info in cache
-    if (!agentsCache[agentId]) {
+    if (!appState.agentsCache[agentId]) {
       console.error(`Agent info not found in cache for: ${agentId}`);
       addSystemMessage(`Could not display agent information for: ${agentId}`);
       return;
     }
     
     // Update the agent card with cached info
-    updateAgentCard(agentsCache[agentId]);
+    updateAgentCard(appState.agentsCache[agentId]);
     console.log(`Displayed agent info for: ${agentId} from cache`);
   } catch (error) {
     console.error('Failed to display agent info:', error);
@@ -156,8 +158,8 @@ function showAgentInfo(agentId) {
  * Send a text message from the input field
  */
 function handleSendMessage() {
-  if (sendCustomTextMessage(textInput.value)) {
-    textInput.value = ""; // Clear the input field
+  if (sendCustomTextMessage(elements.textInput.value)) {
+    elements.textInput.value = ""; // Clear the input field
   }
 }
 
@@ -165,15 +167,15 @@ function handleSendMessage() {
  * Toggle mute state
  */
 async function handleToggleMute() {
-  muteState = !muteState;
-  const success = await toggleMute(muteState);
+  appState.muteState = !appState.muteState;
+  const success = await toggleMute(appState.muteState);
   if (success) {
-    muteButton.textContent = muteState ? 'Unmute' : 'Mute';
+    elements.muteButton.textContent = appState.muteState ? 'Unmute' : 'Mute';
     // Update the before content using a CSS class
-    if (muteState) {
-      muteButton.classList.add('muted');
+    if (appState.muteState) {
+      elements.muteButton.classList.add('muted');
     } else {
-      muteButton.classList.remove('muted');
+      elements.muteButton.classList.remove('muted');
     }
   }
 }
@@ -190,20 +192,18 @@ async function handleToggleMute() {
 async function loadAllAgentsInfo() {
   try {
     const agentSelect = document.getElementById('agent-select');
-    const startButton = document.getElementById('start-button');
     
     if (!agentSelect) return;
     
     // Disable start button until agents are loaded
-    if (startButton) {
-      startButton.disabled = true;
-      startButton.title = "Loading agents...";
+    if (elements.startButton) {
+      elements.startButton.disabled = true;
+      elements.startButton.title = "Loading agents...";
     }
     
     // Clear chat list to remove any existing agent cards
-    const chatList = document.querySelector('.chat-list');
-    if (chatList) {
-      chatList.innerHTML = '';
+    if (elements.chatList) {
+      elements.chatList.innerHTML = '';
     }
     
     // Set loading state
@@ -231,7 +231,7 @@ async function loadAllAgentsInfo() {
     const agentIds = Object.keys(agentsData);
     
     // Store all agent info in cache
-    agentsCache = agentsData;
+    appState.agentsCache = agentsData;
     
     // Remove loading state
     agentSelect.removeAttribute('data-loading');
@@ -247,9 +247,9 @@ async function loadAllAgentsInfo() {
       agentSelect.appendChild(noAgentsOption);
       
       // Keep start button disabled
-      if (startButton) {
-        startButton.disabled = true;
-        startButton.title = "No agents available";
+      if (elements.startButton) {
+        elements.startButton.disabled = true;
+        elements.startButton.title = "No agents available";
       }
       
       // Show message in chat
@@ -268,24 +268,23 @@ async function loadAllAgentsInfo() {
     
     // Automatically select the first agent
     if (agentIds.length > 0) {
-      selectedAgent = agentIds[0];
-      agentSelect.value = selectedAgent;
+      appState.selectedAgent = agentIds[0];
+      agentSelect.value = appState.selectedAgent;
       
       // Enable start button
-      if (startButton) {
-        startButton.disabled = false;
-        startButton.title = "";
+      if (elements.startButton) {
+        elements.startButton.disabled = false;
+        elements.startButton.title = "";
       }
       
       // Display the first agent's information from cache
-      showAgentInfo(selectedAgent);
+      showAgentInfo(appState.selectedAgent);
     }
     
-    console.log(`Loaded ${agentIds.length} agents, selected: ${selectedAgent}`);
+    console.log(`Loaded ${agentIds.length} agents, selected: ${appState.selectedAgent}`);
   } catch (error) {
     console.error('Failed to load agents info:', error);
     const agentSelect = document.getElementById('agent-select');
-    const startButton = document.getElementById('start-button');
     
     if (agentSelect) {
       // Remove loading state
@@ -301,9 +300,9 @@ async function loadAllAgentsInfo() {
     }
     
     // Keep start button disabled
-    if (startButton) {
-      startButton.disabled = true;
-      startButton.title = "Failed to load agents";
+    if (elements.startButton) {
+      elements.startButton.disabled = true;
+      elements.startButton.title = "Failed to load agents";
     }
     
     // Add error message to chat
@@ -317,35 +316,34 @@ async function loadAllAgentsInfo() {
 function initializeApp() {
   // Get DOM elements
   const agentSelect = document.getElementById('agent-select');
-  const startButton = document.getElementById('start-button');
   
   // Set up agent selection handling
   agentSelect.addEventListener('change', (e) => {
-    selectedAgent = e.target.value;
+    appState.selectedAgent = e.target.value;
     
     // Enable start button once an agent is selected
-    if (startButton && selectedAgent) {
-      startButton.disabled = false;
-      startButton.title = "";
+    if (elements.startButton && appState.selectedAgent) {
+      elements.startButton.disabled = false;
+      elements.startButton.title = "";
     }
     
     // Display agent info from cache
-    showAgentInfo(selectedAgent);
+    showAgentInfo(appState.selectedAgent);
   });
   
   // Load all agents info from server
   loadAllAgentsInfo();
   
   // Set up main button event listeners
-  startButton.addEventListener('click', startConversation);
-  endButton.addEventListener('click', stopConversation);
-  sendButton.addEventListener('click', handleSendMessage);
-  interruptButton.addEventListener('click', sendInterruptSignal);
-  muteButton.addEventListener('click', handleToggleMute);
+  elements.startButton.addEventListener('click', startConversation);
+  elements.endButton.addEventListener('click', stopConversation);
+  elements.sendButton.addEventListener('click', handleSendMessage);
+  elements.interruptButton.addEventListener('click', sendInterruptSignal);
+  elements.muteButton.addEventListener('click', handleToggleMute);
   
   // Handle Enter key press in text input
-  textInput.addEventListener('keypress', (event) => {
-    if (event.key === 'Enter' && !sendButton.disabled) {
+  elements.textInput.addEventListener('keypress', (event) => {
+    if (event.key === 'Enter' && !elements.sendButton.disabled) {
       handleSendMessage();
     }
   });

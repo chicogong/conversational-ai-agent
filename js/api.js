@@ -2,36 +2,53 @@
  * API services for TRTC AI conversation
  */
 
+const API_ENDPOINTS = {
+  GET_INFO: '/getInfo',
+  START_CONVERSATION: '/startConversation',
+  STOP_CONVERSATION: '/stopConversation'
+};
+
+/**
+ * Makes an API request to the server
+ * @param {string} endpoint - API endpoint
+ * @param {Object} data - Request payload
+ * @returns {Promise<Object>} API response
+ */
+async function apiRequest(endpoint, data) {
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: typeof data === 'string' ? data : JSON.stringify(data)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => `Status ${response.status}`);
+      throw new Error(`API error: ${response.status} - ${errorText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error(`API request failed for ${endpoint}:`, error);
+    throw error;
+  }
+}
+
 /**
  * Fetches user information from the server
  * @param {string} agentId - The agent ID to use for the conversation
  * @returns {Promise<Object>} The user info object
  */
 async function getUserInfo(agentId) {
-  try {
-    if (!agentId) {
-      throw new Error('Agent ID is required');
-    }
-    
-    const response = await fetch(`${API_BASE_URL}/getInfo`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ agentId })
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch user info: ${response.status}`);
-    }
-
-    const userInfo = await response.json();
-    console.log('User info retrieved successfully');
-    return userInfo;
-  } catch (error) {
-    console.error('Error getting user info:', error);
-    throw error;
+  if (!agentId) {
+    throw new Error('Agent ID is required');
   }
+  
+  const userInfo = await apiRequest(API_ENDPOINTS.GET_INFO, { agentId });
+  console.log('User info retrieved successfully');
+  return userInfo;
 }
 
 /**
@@ -40,23 +57,18 @@ async function getUserInfo(agentId) {
  * @returns {Promise<Object>} Object containing user info
  */
 async function initChatConfig(agentId) {
-  try {
-    if (!agentId) {
-      throw new Error('Agent ID is required for chat configuration');
-    }
-    
-    // Get user info from server with the specified agent
-    const userInfo = await getUserInfo(agentId);
-    
-    // Add agent info to ensure it's passed in the conversation request
-    userInfo.agent = agentId;
-    console.log('Chat config initialized with agent:', agentId);
-    
-    return { userInfo };
-  } catch (error) {
-    console.error('Failed to initialize chat config:', error);
-    throw error;
+  if (!agentId) {
+    throw new Error('Agent ID is required for chat configuration');
   }
+  
+  // Get user info from server with the specified agent
+  const userInfo = await getUserInfo(agentId);
+  
+  // Add agent info to ensure it's passed in the conversation request
+  userInfo.agent = agentId;
+  console.log('Chat config initialized with agent:', agentId);
+  
+  return { userInfo };
 }
 
 /**
@@ -65,28 +77,8 @@ async function initChatConfig(agentId) {
  * @returns {Promise<Object>} The API response
  */
 async function startAIConversation(data) {
-  try {
-    console.log('Starting AI conversation with data:', data);
-    
-    const response = await fetch(`${API_BASE_URL}/startConversation`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: data,
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Server response:', errorText);
-      throw new Error(`API error: ${response.status} - ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error("Failed to start AI conversation:", error);
-    throw error;
-  }
+  console.log('Starting AI conversation with data:', data);
+  return apiRequest(API_ENDPOINTS.START_CONVERSATION, data);
 }
 
 /**
@@ -95,22 +87,5 @@ async function startAIConversation(data) {
  * @returns {Promise<Object>} The API response
  */
 async function stopAIConversation(data) {
-  try {
-    const response = await fetch(`${API_BASE_URL}/stopConversation`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: data,
-    });
-
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error("Failed to stop AI conversation:", error);
-    throw error;
-  }
+  return apiRequest(API_ENDPOINTS.STOP_CONVERSATION, data);
 } 

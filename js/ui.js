@@ -2,14 +2,20 @@
  * UI module for handling the user interface interactions
  */
 
-// DOM Elements
-const chatListElement = document.querySelector(".chat-list");
-const startButton = document.getElementById("start-button");
-const endButton = document.getElementById("end-button");
-const textInput = document.getElementById("text-input");
-const sendButton = document.getElementById("send-button");
-const interruptButton = document.getElementById("interrupt-button");
-const muteButton = document.getElementById("mute-button");
+// DOM Elements - Cache selectors for performance
+const elements = {
+  chatList: document.querySelector(".chat-list"),
+  startButton: document.getElementById("start-button"),
+  endButton: document.getElementById("end-button"),
+  textInput: document.getElementById("text-input"),
+  sendButton: document.getElementById("send-button"),
+  interruptButton: document.getElementById("interrupt-button"),
+  muteButton: document.getElementById("mute-button"),
+  statusElements: {
+    ai: document.getElementById('ai-state'),
+    room: document.getElementById('room-status')
+  }
+};
 
 // Chat messages array
 let messages = [];
@@ -37,8 +43,8 @@ function renderChatMessages() {
     fragment.appendChild(messageElement);
   });
 
-  chatListElement.innerHTML = "";
-  chatListElement.appendChild(fragment);
+  elements.chatList.innerHTML = "";
+  elements.chatList.appendChild(fragment);
 }
 
 /**
@@ -47,10 +53,7 @@ function renderChatMessages() {
  * @param {string} statusText - The status text to display
  */
 function updateStatus(type, statusText) {
-  const element = type === 'ai' ?
-          document.getElementById('ai-state') :
-          document.getElementById('room-status');
-
+  const element = elements.statusElements[type];
   if (element) {
     element.textContent = statusText;
   } else {
@@ -67,13 +70,11 @@ function updateStatus(type, statusText) {
  * @param {boolean} end - Whether this is the end of the message
  */
 function addMessage(sender, content, type, id, end = true) {
-  const existingMessage = messages.find(
-    msg => msg.id === id && msg.sender === sender
-  );
+  const existingIndex = messages.findIndex(msg => msg.id === id && msg.sender === sender);
 
-  if (existingMessage) {
-    existingMessage.content = content;
-    existingMessage.end = end;
+  if (existingIndex !== -1) {
+    messages[existingIndex].content = content;
+    messages[existingIndex].end = end;
   } else {
     messages.unshift({
       id,
@@ -93,7 +94,6 @@ function addMessage(sender, content, type, id, end = true) {
  * @param {boolean} isHTML - Whether the content is HTML that should be rendered
  */
 function addSystemMessage(content, isHTML = false) {
-  const chatList = document.querySelector('.chat-list');
   const chatItem = document.createElement('div');
   chatItem.className = 'chat-item ai';
   
@@ -112,17 +112,17 @@ function addSystemMessage(content, isHTML = false) {
   
   chatItem.appendChild(chatId);
   chatItem.appendChild(chatText);
-  chatList.insertBefore(chatItem, chatList.firstChild);
+  elements.chatList.insertBefore(chatItem, elements.chatList.firstChild);
 }
 
 /**
  * Reset the UI state
  */
 function resetUI() {
-  startButton.disabled = false;
-  endButton.disabled = true;
-  sendButton.disabled = true;
-  interruptButton.disabled = true;
+  elements.startButton.disabled = false;
+  elements.endButton.disabled = true;
+  elements.sendButton.disabled = true;
+  elements.interruptButton.disabled = true;
   updateStatus('room', "Disconnected");
   updateStatus('ai', "AI NotReady");
 } 

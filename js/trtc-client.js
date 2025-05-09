@@ -2,10 +2,18 @@
  * TRTC client module for handling TRTC-specific functionality
  */
 
-// TRTC client instance
-let trtcClient = null;
-let currentUserId = null;
-let botUserId = null;
+// TRTC state
+const trtcState = {
+  client: null,
+  currentUserId: null,
+  botUserId: null
+};
+
+// TRTC configuration constants
+const TRTC_CONFIG = {
+  CMD_ID: 2, // Fixed cmdId as per requirement
+  VOLUME_EVALUATION_INTERVAL: 50 // 50ms for smoother visualization
+};
 
 /**
  * ===========================================
@@ -18,10 +26,10 @@ let botUserId = null;
  * @returns {Object} The TRTC client instance
  */
 function initTRTCClient() {
-  if (!trtcClient) {
-    trtcClient = TRTC.create();
+  if (!trtcState.client) {
+    trtcState.client = TRTC.create();
   }
-  return trtcClient;
+  return trtcState.client;
 }
 
 /**
@@ -39,14 +47,12 @@ async function enterTRTCRoom(params) {
     userSig: params.userSig,
   });
   
-  // Set up message handler
+  // Set up event handlers
   client.on(TRTC.EVENT.CUSTOM_MESSAGE, handleTRTCMessage);
-  
-  // Set up audio volume handler
   client.on(TRTC.EVENT.AUDIO_VOLUME, handleAudioVolume);
   
-  // Enable audio volume evaluation with higher frequency (50ms) for smoother visualization
-  client.enableAudioVolumeEvaluation(50);
+  // Enable audio volume evaluation with higher frequency for smoother visualization
+  client.enableAudioVolumeEvaluation(TRTC_CONFIG.VOLUME_EVALUATION_INTERVAL);
   
   // Start audio
   await client.startLocalAudio();
@@ -61,8 +67,8 @@ async function enterTRTCRoom(params) {
  */
 async function exitTRTCRoom() {
   try {
-    if (trtcClient) {
-      await trtcClient.exitRoom();
+    if (trtcState.client) {
+      await trtcState.client.exitRoom();
       console.log('Successfully exited TRTC room');
     }
   } catch (error) {
@@ -75,9 +81,9 @@ async function exitTRTCRoom() {
  * Destroy TRTC client
  */
 function destroyTRTCClient() {
-  if (trtcClient) {
-    trtcClient.destroy();
-    trtcClient = null;
+  if (trtcState.client) {
+    trtcState.client.destroy();
+    trtcState.client = null;
   }
 }
 
@@ -87,8 +93,8 @@ function destroyTRTCClient() {
  * @param {string} aiUserId - The AI bot user ID
  */
 function setUserIds(userId, aiUserId) {
-  currentUserId = userId;
-  botUserId = aiUserId;
+  trtcState.currentUserId = userId;
+  trtcState.botUserId = aiUserId;
 }
 
 /**
@@ -100,13 +106,13 @@ function setUserIds(userId, aiUserId) {
 /**
  * Toggle mute status for local audio
  * @param {boolean} mute - Whether to mute (true) or unmute (false)
- * @returns {Promise} Promise that resolves when mute status is updated
+ * @returns {Promise<boolean>} Promise that resolves to success status
  */
 async function toggleMute(mute) {
-  if (!trtcClient) return false;
+  if (!trtcState.client) return false;
   
   try {
-    await trtcClient.updateLocalAudio({ mute: mute });
+    await trtcState.client.updateLocalAudio({ mute: mute });
     console.log(`Local audio ${mute ? 'muted' : 'unmuted'} successfully`);
     return true;
   } catch (error) {
@@ -122,74 +128,78 @@ async function toggleMute(mute) {
  */
 
 /**
- * Send a custom text message to the AI
- * @param {string} message - The message to send
+ * Creates a message payload with common attributes
+ * @param {number} type - Message type from MESSAGE_TYPES
+ * @param {Object} payloadData - The payload data
+ * @returns {Object} The formatted message payload
  */
-function sendCustomTextMessage(message) {
-  if (!trtcClient || !message.trim()) return;
+function createMessagePayload(type, payloadData) {
+  return {
+    type: type,
+    sender: trtcState.currentUserId,
+    receiver: [trtcState.botUserId],
+    payload: {
+      id: Date.now().toString(),
+      timestamp: Date.now(),
+      ...payloadData
+    }
+  };
+}
+
+/**
+ * Sends a message through the TRTC client
+ * @param {Object} payload - The message payload
+ * @returns {boolean} Success status
+ */
+function sendTRTCMessage(payload) {
+  if (!trtcState.client) return false;
   
   try {
-    const messageText = message.trim();
-    const messageId = Date.now().toString(); // Simple unique ID
-    
-    // Create custom message payload
-    const payload = {
-      type: MESSAGE_TYPES.CUSTOM_TEXT,
-      sender: currentUserId,
-      receiver: [botUserId],
-      payload: {
-        id: messageId,
-        message: messageText,
-        timestamp: Date.now()
-      }
-    };
-    
-    // Send the message through TRTC
-    trtcClient.sendCustomMessage({
-      cmdId: 2, // Fixed cmdId as per requirement
+    trtcState.client.sendCustomMessage({
+      cmdId: TRTC_CONFIG.CMD_ID,
       data: new TextEncoder().encode(JSON.stringify(payload)).buffer
     });
-    
-    console.log('Custom text message sent');
     return true;
   } catch (error) {
-    console.error("Failed to send custom message:", error);
+    console.error("Failed to send TRTC message:", error);
     return false;
   }
 }
 
 /**
+ * Send a custom text message to the AI
+ * @param {string} message - The message to send
+ * @returns {boolean} Success status
+ */
+function sendCustomTextMessage(message) {
+  if (!trtcState.client || !message.trim()) return false;
+  
+  const messageText = message.trim();
+  const payload = createMessagePayload(MESSAGE_TYPES.CUSTOM_TEXT, {
+    message: messageText
+  });
+  
+  const success = sendTRTCMessage(payload);
+  if (success) {
+    console.log('Custom text message sent');
+  }
+  return success;
+}
+
+/**
  * Send an interrupt signal to the AI
+ * @returns {boolean} Success status
  */
 function sendInterruptSignal() {
-  if (!trtcClient) return false;
+  if (!trtcState.client) return false;
   
-  try {
-    const messageId = Date.now().toString();
-    
-    // Create interrupt signal payload
-    const payload = {
-      type: MESSAGE_TYPES.CUSTOM_INTERRUPT,
-      sender: currentUserId,
-      receiver: [botUserId],
-      payload: {
-        id: messageId,
-        timestamp: Date.now()
-      }
-    };
-    
-    // Send the interrupt through TRTC
-    trtcClient.sendCustomMessage({
-      cmdId: 2,
-      data: new TextEncoder().encode(JSON.stringify(payload)).buffer
-    });
-    
+  const payload = createMessagePayload(MESSAGE_TYPES.CUSTOM_INTERRUPT, {});
+  
+  const success = sendTRTCMessage(payload);
+  if (success) {
     console.log('Interrupt signal sent');
-    return true;
-  } catch (error) {
-    console.error("Failed to send interrupt signal:", error);
-    return false;
   }
+  return success;
 }
 
 /**
@@ -207,21 +217,18 @@ function handleTRTCMessage(event) {
     const jsonData = new TextDecoder().decode(event.data);
     const data = JSON.parse(jsonData);
 
-    switch (data.type) {
-      case MESSAGE_TYPES.CONVERSATION:
-        handleConversationMessage(data);
-        break;
-      case MESSAGE_TYPES.STATE_CHANGE:
-        handleStateChangeMessage(data);
-        break;
-      case MESSAGE_TYPES.ERROR_CALLBACK:
-        handleErrorCallbackMessage(data);
-        break;
-      case MESSAGE_TYPES.METRICS_CALLBACK:
-        handleMetricsMessage(data);
-        break;
-      default:
-        console.warn(`Unknown message type: ${data.type}`);
+    const handlers = {
+      [MESSAGE_TYPES.CONVERSATION]: handleConversationMessage,
+      [MESSAGE_TYPES.STATE_CHANGE]: handleStateChangeMessage,
+      [MESSAGE_TYPES.ERROR_CALLBACK]: handleErrorCallbackMessage,
+      [MESSAGE_TYPES.METRICS_CALLBACK]: handleMetricsMessage
+    };
+
+    const handler = handlers[data.type];
+    if (handler) {
+      handler(data);
+    } else {
+      console.warn(`Unknown message type: ${data.type}`);
     }
   } catch (error) {
     console.error('Error processing TRTC message:', error);
@@ -233,17 +240,15 @@ function handleTRTCMessage(event) {
  * @param {Object} data - The conversation message data
  */
 function handleConversationMessage(data) {
-  const sender = data.sender;
-  const text = data.payload.text;
-  const roundId = data.payload.roundid;
+  const { sender, payload } = data;
+  const { text, roundid, end } = payload;
   const isRobot = sender.includes('ai_');
-  const end = data.payload.end;
 
   addMessage(
     sender, 
     text, 
     isRobot ? 'ai' : 'user',
-    roundId,
+    roundid,
     end
   );
 }
@@ -319,7 +324,7 @@ function handleAudioVolume(event) {
       updateVolumeBar('userVolumeBar', smoothedVolume);
     } 
     // Check if this is the AI bot
-    else if (userId === botUserId) {
+    else if (userId === trtcState.botUserId) {
       // Apply smoothing to volume transitions
       const smoothedVolume = (volume * (1 - smoothingFactor)) + (prevAiVolume * smoothingFactor);
       prevAiVolume = smoothedVolume;
