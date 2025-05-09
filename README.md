@@ -1,9 +1,9 @@
-# 🚀 TRTC AI Build Quickly
+# 🚀 Conversationsal AI Agent
 
 <div align="center">
 
-[![TRTC](https://img.shields.io/badge/Conversatiol_AI-2.0.0-blue.svg)](https://cloud.tencent.com/product/trtc)
-[![TRTC](https://img.shields.io/badge/AI_Agent-2.0.0-blue.svg)](https://cloud.tencent.com/document/product/647/110584)
+[![Conversationsal AI Agent](https://img.shields.io/badge/Conversationsal_AI_Agent-2.0.0-blue.svg)](https://cloud.tencent.com/product/trtc)
+[![AI Agent](https://img.shields.io/badge/AI_Agent-2.0.0-blue.svg)](https://cloud.tencent.com/document/product/647/110584)
 [![Node.js](https://img.shields.io/badge/Node.js-18.0.0-green.svg)](https://nodejs.org/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
@@ -101,6 +101,9 @@ trtc-ai-build-quickly/
 │   ├── sweet_girl.js        # 甜妹陪聊 Agent 配置
 │   ├── mcp_tencent_map.js   # MCP 腾讯地图 Agent 配置
 │   └── default.js           # 默认 Agent 配置
+├── ai_gen_servers/        # 接入语音对话的AI生成模块(可选)
+│   ├── llm/                 # LLM 代理服务实现，实现自定义function call等
+│   └── ...                  # MCP/A2A 等服务端实现
 ├── css/                     # 样式文件
 ├── docs/                  # 文档
 │   └── images/               # 图片资源
