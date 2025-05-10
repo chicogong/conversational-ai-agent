@@ -3,21 +3,22 @@
  */
 
 const API_ENDPOINTS = {
-  GET_INFO: '/getInfo',
-  START_CONVERSATION: '/startConversation',
-  STOP_CONVERSATION: '/stopConversation'
+  GET_CREDENTIALS: '/credentials',
+  START_CONVERSATION: '/conversations',
+  STOP_CONVERSATION: '/conversations'
 };
 
 /**
  * Makes an API request to the server
  * @param {string} endpoint - API endpoint
  * @param {Object} data - Request payload
+ * @param {string} [method="POST"] - HTTP method to use
  * @returns {Promise<Object>} API response
  */
-async function apiRequest(endpoint, data) {
+async function apiRequest(endpoint, data, method = "POST") {
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      method: "POST",
+      method: method,
       headers: {
         "Content-Type": "application/json",
       },
@@ -46,7 +47,7 @@ async function getUserInfo(agentId) {
     throw new Error('Agent ID is required');
   }
   
-  const userInfo = await apiRequest(API_ENDPOINTS.GET_INFO, { agentId });
+  const userInfo = await apiRequest(API_ENDPOINTS.GET_CREDENTIALS, { agentId });
   console.log('User info retrieved successfully');
   return userInfo;
 }
@@ -87,5 +88,5 @@ async function startAIConversation(data) {
  * @returns {Promise<Object>} The API response
  */
 async function stopAIConversation(data) {
-  return apiRequest(API_ENDPOINTS.STOP_CONVERSATION, data);
+  return apiRequest(API_ENDPOINTS.STOP_CONVERSATION, data, "DELETE");
 } 

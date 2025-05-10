@@ -221,7 +221,7 @@ async function loadAllAgentsInfo() {
     agentSelect.appendChild(loadingOption);
     
     // Fetch all agents info from server
-    const response = await fetch(`${API_BASE_URL}/getAllAgentsInfo`);
+    const response = await fetch(`${API_BASE_URL}/agents`);
     if (!response.ok) {
       throw new Error(`Failed to fetch agents info: ${response.status}`);
     }

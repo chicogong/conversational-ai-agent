@@ -19,8 +19,7 @@ const app = express();
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms'));
 app.use(express.json());
 app.use(cors());
-app.use(express.static(__dirname, { maxAge: '1d', etag: true }));
-
+app.use(express.static(__dirname, { maxAge: '1m', etag: true }));
 
 /**
  * Create a new TRTC client instance for a specific agent
@@ -68,8 +67,11 @@ function formatAgentInfo(agentName, agentCardConfig) {
   };
 }
 
-// Start AI conversation
-app.post('/startConversation', (req, res) => {
+/**
+ * Start an AI conversation
+ * POST /conversations
+ */
+app.post('/conversations', (req, res) => {
   try {
     const { userInfo } = req.body || {};
     
@@ -117,8 +119,11 @@ app.post('/startConversation', (req, res) => {
   }
 });
 
-// Stop AI conversation
-app.post('/stopConversation', (req, res) => {
+/**
+ * Stop an AI conversation
+ * DELETE /conversations
+ */
+app.delete('/conversations', (req, res) => {
   try {
     const { TaskId, agent } = req.body;
     
@@ -126,7 +131,6 @@ app.post('/stopConversation', (req, res) => {
       return res.status(400).json({ error: 'Missing required TaskId field' });
     }
     
-    // 如果请求中提供了agent ID，使用它创建客户端
     if (agent && agentConfig[agent]) {
       const client = createClientForAgent(agent);
       return client.StopAIConversation({ TaskId })
@@ -137,7 +141,6 @@ app.post('/stopConversation', (req, res) => {
         });
     }
     
-    // 如果没有提供agent ID，尝试使用第一个可用的agent
     const firstAgentId = availableAgents[0];
     if (!firstAgentId) {
       throw new Error("No agent configuration available for initializing client");
@@ -156,8 +159,11 @@ app.post('/stopConversation', (req, res) => {
   }
 });
 
-// Generate user credentials
-app.post('/getInfo', (req, res) => {
+/**
+ * Generate user credentials
+ * POST /credentials
+ */
+app.post('/credentials', (req, res) => {
   try {
     const { agentId } = req.body;
     
@@ -196,8 +202,11 @@ app.post('/getInfo', (req, res) => {
   }
 });
 
-// Get all agents info
-app.get('/getAllAgentsInfo', (req, res) => {
+/**
+ * Get all agents information
+ * GET /agents
+ */
+app.get('/agents', (req, res) => {
   try {
     const agentNames = Object.keys(agentConfig);
     const agentsInfo = {};
@@ -215,11 +224,13 @@ app.get('/getAllAgentsInfo', (req, res) => {
   }
 });
 
-// Get specific agent info
-app.get('/getAgentInfo', (req, res) => {
+/**
+ * Get specific agent information
+ * GET /agents/:agentId
+ */
+app.get('/agents/:agentId', (req, res) => {
   try {
-    const firstAgentId = availableAgents[0];
-    const agentName = req.query.agent || firstAgentId;
+    const agentName = req.params.agentId;
     
     if (!agentConfig[agentName]) {
       return res.status(404).json({ 
@@ -242,11 +253,11 @@ app.get('/getAgentInfo', (req, res) => {
 
 /**
  * Handle TRTC-AI server callback
- * POST /serverCallback
+ * POST /callbacks
  * This is the TRTC-AI server callback documentation: https://cloud.tencent.com/document/product/647/115506
  * You can implement custom logic based on different callback event types
  */
-app.post('/serverCallback', (req, res) => {
+app.post('/callbacks', (req, res) => {
   try {
     const sdkAppId = req.headers.sdkappid;
     console.log('Received server callback:', { 
