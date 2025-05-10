@@ -18,7 +18,7 @@ module.exports = {
         // Agent card information
         AgentCard: {
             name: "腾讯地图出行助手",
-            avatar: "agent_cards/assets/mcp_tencent_map.png",
+            avatar: "agent_cards/assets/mcp_tencent_map.jpg",
             description: "我是腾讯地图语音出行助手，可以帮助您了解周边美食、查询实时路况、规划最佳路线，获取天气预报。",
             capabilities: ["周边美食推荐", "实时路况查询", "最佳路线规划", "天气预报查询"],
             voiceType: "专业导航女声",
