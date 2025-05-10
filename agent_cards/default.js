@@ -61,7 +61,7 @@ module.exports = {
             VoiceType: process.env.MINIMAX_TTS_VOICE_TYPE,  // Use real customer service voice clone
             APIUrl: "https://api.minimax.chat/v1/t2a_v2",
             Model: "speech-01-turbo",
-            Speed: 1  // Speech speed adjustment for different scenarios
+            Speed: 1.2  // Speech speed adjustment for different scenarios
         }
     }
 };
