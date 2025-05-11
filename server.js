@@ -4,7 +4,7 @@ const morgan = require('morgan');
 const cors = require('cors');
 const tencentcloud = require("tencentcloud-sdk-nodejs-trtc");
 const TLSSigAPIv2 = require('tls-sig-api-v2');
-const agentConfig = require('./agent_cards');
+const agentConfig = require('./src/agent_cards');
 
 const TrtcClient = tencentcloud.trtc.v20190722.Client;
 
@@ -19,7 +19,8 @@ const app = express();
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms'));
 app.use(express.json());
 app.use(cors());
-app.use(express.static(__dirname, { maxAge: '1m', etag: true }));
+app.use(express.static(path.join(__dirname, 'public'), { maxAge: '1m', etag: true }));
+app.use('/src', express.static(path.join(__dirname, 'src'), { maxAge: '1m', etag: true }));
 
 /**
  * Create a new TRTC client instance for a specific agent
@@ -59,7 +60,7 @@ function formatAgentInfo(agentName, agentCardConfig) {
   return {
     id: agentName,
     name: agentCard.name || `Agent (${agentName})`,
-    avatar: agentCard.avatar || 'assets/default-avatar.png',
+    avatar: agentCard.avatar || '/src/agent_cards/assets/default.png',
     description: agentCard.description || 'No description available.',
     capabilities: Array.isArray(agentCard.capabilities) ? agentCard.capabilities : [],
     voiceType: agentCard.voiceType || 'Default Voice',

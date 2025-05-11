@@ -39,7 +39,7 @@ const AgentCardBuilder = {
     if (!agentInfo) return '';
     
     const {
-      avatar = 'assets/default-avatar.png',
+      avatar = '/src/agent_cards/assets/default.png',
       name = 'AI Assistant',
       voiceType = 'Default Voice',
       description = 'No description available.',

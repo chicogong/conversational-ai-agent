@@ -18,7 +18,7 @@ module.exports = {
         // Agent card information
         AgentCard: {
             name: "TRTC Assistant",
-            avatar: "agent_cards/assets/default.png",
+            avatar: "/src/agent_cards/assets/default.png",
             description: "I'm your AI assistant powered by TRTC technology. I can help answer questions and have natural conversations.",
             capabilities: ["Real-time conversation", "Voice interaction", "Question answering", "Information lookup"],
             voiceType: "Professional female voice (customer-service)",
@@ -59,9 +59,9 @@ module.exports = {
             GroupId: process.env.MINIMAX_TTS_GROUP_ID,
             APIKey: process.env.MINIMAX_TTS_API_KEY,
             VoiceType: process.env.MINIMAX_TTS_VOICE_TYPE,  // Use real customer service voice clone
-            APIUrl: "https://api.minimax.chat/v1/t2a_v2",
-            Model: "speech-01-turbo",
-            Speed: 1.2  // Speech speed adjustment for different scenarios
+            APIUrl: process.env.MINIMAX_TTS_API_URL || "http://api.minimax.chat/v1/t2a_v2",
+            Model: process.env.MINIMAX_TTS_MODEL || "speech-01-turbo",
+            Speed: 1  // Speech speed adjustment for different scenarios
         }
     }
 };
