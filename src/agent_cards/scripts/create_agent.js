@@ -226,22 +226,6 @@ function updateIndexFile(agentId) {
   }
 }
 
-// Function to save config as JSON for future reference
-function saveConfigToJson(config) {
-  try {
-    const configDir = path.join(__dirname, '..', 'configs');
-    if (!fs.existsSync(configDir)) {
-      fs.mkdirSync(configDir, { recursive: true });
-    }
-    
-    const configPath = path.join(configDir, `${config.agentId}.json`);
-    fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
-    console.log(COLORS.green + `✅ 已保存配置到: ${configPath}` + COLORS.reset);
-  } catch (error) {
-    console.error(COLORS.yellow + `⚠️ 保存配置文件时出错: ${error.message}` + COLORS.reset);
-  }
-}
-
 // Function to validate ID format
 function isValidId(id) {
   return /^[a-z0-9_]+$/.test(id);
@@ -409,9 +393,6 @@ async function runSetup() {
       
       fs.writeFileSync(agentFilePath, generateAgentTemplate(config));
       console.log(COLORS.green + `✅ 助手配置文件已创建: ${agentFilePath}` + COLORS.reset);
-
-      // Save configuration as JSON for easier future edits
-      saveConfigToJson(config);
 
       // Create placeholder avatar if it doesn't exist
       const avatarPath = path.join(assetsDir, `${agentId}.png`);
