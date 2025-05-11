@@ -18,7 +18,7 @@ module.exports = {
         // Agent card information
         AgentCard: {
             name: "Sweet Girl",
-            avatar: "agent_cards/assets/sweet_girl.jpg",
+            avatar: "/src/agent_cards/assets/sweet_girl.jpg",
             description: "情感陪伴的甜美女孩，可以陪你聊天解闷，提供情绪价值",
             capabilities: ["情感陪伴", "撒娇卖萌", "关心体贴", "聊天解闷"],
             voiceType: "甜美声音",
@@ -76,9 +76,9 @@ module.exports = {
             GroupId: process.env.MINIMAX_TTS_GROUP_ID,
             APIKey: process.env.MINIMAX_TTS_API_KEY,   // [Required] Replace with your actual LLM APIKey
             VoiceType: process.env.MINIMAX_TTS_VOICE_TYPE,  // Use real customer service voice clone
-            APIUrl: "http://api.minimax.chat/v1/t2a_v2",
-            Model: "speech-01-turbo",
-            Speed: 1.2  // Speech speed adjustment for different scenarios
+            APIUrl: process.env.MINIMAX_TTS_API_URL || "http://api.minimax.chat/v1/t2a_v2",
+            Model: process.env.MINIMAX_TTS_MODEL || "speech-02-hd",
+            Speed: 1  // Speech speed adjustment for different scenarios
         }      
     }
 };
