@@ -127,31 +127,17 @@ async function stopConversation() {
  */
 
 /**
- * Loads and displays information about the selected agent from cache
+ * Displays information about the selected agent
  * @param {string} agentId - The ID of the selected agent
  */
 function showAgentInfo(agentId) {
-  try {
-    // Don't load agent info if no agent is selected
-    if (!agentId) {
-      console.log('No agent selected, skipping agent info display');
-      return;
-    }
-    
-    // Check if we have agent info in cache
-    if (!appState.agentsCache[agentId]) {
-      console.error(`Agent info not found in cache for: ${agentId}`);
-      addSystemMessage(`Could not display agent information for: ${agentId}`);
-      return;
-    }
-    
-    // Update the agent card with cached info
-    updateAgentCard(appState.agentsCache[agentId]);
-    console.log(`Displayed agent info for: ${agentId} from cache`);
-  } catch (error) {
-    console.error('Failed to display agent info:', error);
-    addSystemMessage(`Failed to display agent: ${error.message}`);
+  if (!agentId || !appState.agentsCache[agentId]) {
+    console.error(`Agent info not available for: ${agentId}`);
+    return;
   }
+  
+  // Update the agent card with cached info
+  updateAgentCard(appState.agentsCache[agentId]);
 }
 
 /**
@@ -187,127 +173,122 @@ async function handleToggleMute() {
  */
 
 /**
- * Loads all available agents from the server with their complete information
+ * Loads all available agents from the server
  */
 async function loadAllAgentsInfo() {
+  const agentSelect = document.getElementById('agent-select');
+  if (!agentSelect) return;
+  
   try {
-    const agentSelect = document.getElementById('agent-select');
-    
-    if (!agentSelect) return;
-    
-    // Disable start button until agents are loaded
-    if (elements.startButton) {
-      elements.startButton.disabled = true;
-      elements.startButton.title = "Loading agents...";
-    }
-    
-    // Clear chat list to remove any existing agent cards
-    if (elements.chatList) {
-      elements.chatList.innerHTML = '';
-    }
-    
     // Set loading state
+    agentSelect.innerHTML = '<option disabled selected>Loading agents...</option>';
     agentSelect.setAttribute('data-loading', 'true');
     agentSelect.disabled = true;
+    elements.startButton.disabled = true;
+    elements.chatList.innerHTML = '';
     
-    // Clear existing options
-    agentSelect.innerHTML = '';
-    
-    // Add loading option
-    const loadingOption = document.createElement('option');
-    loadingOption.disabled = true;
-    loadingOption.selected = true;
-    loadingOption.textContent = 'Loading agents...';
-    agentSelect.appendChild(loadingOption);
-    
-    // Fetch all agents info from server
+    // Fetch agents from server
     const response = await fetch(`${API_BASE_URL}/agents`);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch agents info: ${response.status}`);
-    }
+    if (!response.ok) throw new Error(`Failed to fetch agents: ${response.status}`);
     
     const data = await response.json();
     const agentsData = data.agents || {};
     const agentIds = Object.keys(agentsData);
     
-    // Store all agent info in cache
+    // Store agent data in cache
     appState.agentsCache = agentsData;
     
-    // Remove loading state
+    // Clear loading state
     agentSelect.removeAttribute('data-loading');
     agentSelect.disabled = false;
-    
-    // Clear loading option
     agentSelect.innerHTML = '';
     
     if (agentIds.length === 0) {
-      const noAgentsOption = document.createElement('option');
-      noAgentsOption.disabled = true;
-      noAgentsOption.textContent = 'No agents available';
-      agentSelect.appendChild(noAgentsOption);
-      
-      // Keep start button disabled
-      if (elements.startButton) {
-        elements.startButton.disabled = true;
-        elements.startButton.title = "No agents available";
-      }
-      
-      // Show message in chat
+      agentSelect.innerHTML = '<option disabled>No agents available</option>';
+      elements.startButton.disabled = true;
+      elements.startButton.title = "No agents available";
       addSystemMessage("No AI assistants available. Please try again later.");
       return;
     }
     
-    // Add agents to select dropdown
+    // Populate dropdown
     agentIds.forEach(agentId => {
-      const agent = agentsData[agentId];
       const option = document.createElement('option');
       option.value = agentId;
-      option.textContent = agent.name;
+      option.textContent = agentsData[agentId].name;
       agentSelect.appendChild(option);
     });
     
-    // Automatically select the first agent
-    if (agentIds.length > 0) {
-      appState.selectedAgent = agentIds[0];
-      agentSelect.value = appState.selectedAgent;
-      
-      // Enable start button
-      if (elements.startButton) {
-        elements.startButton.disabled = false;
-        elements.startButton.title = "";
-      }
-      
-      // Display the first agent's information from cache
-      showAgentInfo(appState.selectedAgent);
-    }
+    // Select first agent
+    appState.selectedAgent = agentIds[0];
+    agentSelect.value = appState.selectedAgent;
+    elements.startButton.disabled = false;
     
-    console.log(`Loaded ${agentIds.length} agents, selected: ${appState.selectedAgent}`);
+    // Display agent info
+    showAgentInfo(appState.selectedAgent);
+    updateAgentNavButtons();
+    
+    console.log(`Loaded ${agentIds.length} agents`);
   } catch (error) {
-    console.error('Failed to load agents info:', error);
-    const agentSelect = document.getElementById('agent-select');
+    console.error('Failed to load agents:', error);
     
-    if (agentSelect) {
-      // Remove loading state
-      agentSelect.removeAttribute('data-loading');
-      agentSelect.disabled = false;
-      
-      agentSelect.innerHTML = '';
-      const errorOption = document.createElement('option');
-      errorOption.disabled = true;
-      errorOption.selected = true;
-      errorOption.textContent = 'Error loading agents';
-      agentSelect.appendChild(errorOption);
-    }
+    // Handle error state
+    agentSelect.innerHTML = '<option disabled selected>Error loading agents</option>';
+    agentSelect.removeAttribute('data-loading');
+    agentSelect.disabled = false;
+    elements.startButton.disabled = true;
+    elements.startButton.title = "Failed to load agents";
     
-    // Keep start button disabled
-    if (elements.startButton) {
-      elements.startButton.disabled = true;
-      elements.startButton.title = "Failed to load agents";
-    }
-    
-    // Add error message to chat
     addSystemMessage(`Failed to load agents: ${error.message}`);
   }
+}
+
+/**
+ * Changes agent selection in the dropdown
+ * @param {number} direction - Direction to change (-1 for previous, 1 for next)
+ */
+function changeAgentSelection(direction) {
+  const agentSelect = document.getElementById('agent-select');
+  if (!agentSelect || agentSelect.disabled) return;
+  
+  const options = agentSelect.options;
+  const currentIndex = agentSelect.selectedIndex;
+  const newIndex = currentIndex + direction;
+  
+  // Check if new index is valid
+  if (newIndex >= 0 && newIndex < options.length) {
+    agentSelect.selectedIndex = newIndex;
+    
+    // Update application state
+    appState.selectedAgent = agentSelect.value;
+    
+    // Display agent info and update UI
+    showAgentInfo(appState.selectedAgent);
+    updateAgentNavButtons();
+    
+    // Enable start button
+    if (elements.startButton) {
+      elements.startButton.disabled = false;
+      elements.startButton.title = "";
+    }
+  }
+}
+
+/**
+ * Updates the enabled/disabled state of the navigation buttons
+ */
+function updateAgentNavButtons() {
+  const agentSelect = document.getElementById('agent-select');
+  const prevButton = document.getElementById('prev-agent-btn');
+  const nextButton = document.getElementById('next-agent-btn');
+  
+  if (!agentSelect || !prevButton || !nextButton) return;
+  
+  // Disable prev button if we're at the first option
+  prevButton.disabled = agentSelect.selectedIndex <= 0;
+  
+  // Disable next button if we're at the last option
+  nextButton.disabled = agentSelect.selectedIndex >= agentSelect.options.length - 1;
 }
 
 /**
@@ -316,22 +297,31 @@ async function loadAllAgentsInfo() {
 function initializeApp() {
   // Get DOM elements
   const agentSelect = document.getElementById('agent-select');
+  const prevAgentBtn = document.getElementById('prev-agent-btn');
+  const nextAgentBtn = document.getElementById('next-agent-btn');
   
   // Set up agent selection handling
-  agentSelect.addEventListener('change', (e) => {
-    appState.selectedAgent = e.target.value;
+  agentSelect.addEventListener('change', () => {
+    appState.selectedAgent = agentSelect.value;
     
-    // Enable start button once an agent is selected
-    if (elements.startButton && appState.selectedAgent) {
+    // Enable start button
+    if (elements.startButton) {
       elements.startButton.disabled = false;
       elements.startButton.title = "";
     }
     
-    // Display agent info from cache
+    // Display agent info
     showAgentInfo(appState.selectedAgent);
+    
+    // Update navigation buttons
+    updateAgentNavButtons();
   });
   
-  // Load all agents info from server
+  // Set up agent navigation buttons
+  if (prevAgentBtn) prevAgentBtn.addEventListener('click', () => changeAgentSelection(-1));
+  if (nextAgentBtn) nextAgentBtn.addEventListener('click', () => changeAgentSelection(1));
+  
+  // Load all agents info
   loadAllAgentsInfo();
   
   // Set up main button event listeners
