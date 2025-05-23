@@ -5,6 +5,7 @@ const cors = require('cors');
 const tencentcloud = require("tencentcloud-sdk-nodejs-trtc");
 const TLSSigAPIv2 = require('tls-sig-api-v2');
 const agentConfig = require('./src/agent_cards');
+const { sendReq } = require('./capi');
 
 const TrtcClient = tencentcloud.trtc.v20190722.Client;
 
@@ -287,24 +288,59 @@ app.post('/transcription', async (req, res) => {
         required: ['TaskId', 'TargetUserIdList']
       });
     }
-    let client;
-    if (agent && agentConfig[agent]) {
-      client = createClientForAgent(agent);
+    
+    // 获取配置信息
+    let config;
+    let agentId = agent;
+    
+    if (agentId && agentConfig[agentId]) {
+      config = agentConfig[agentId].CONFIG.apiConfig;
+      console.log(`Using API config from agent: ${agentId}`);
     } else {
-      const firstAgentId = availableAgents[0];
-      if (!firstAgentId) {
+      agentId = availableAgents[0];
+      if (!agentId) {
         throw new Error('No agent configuration available for initializing client');
       }
-      client = createClientForAgent(firstAgentId);
+      config = agentConfig[agentId].CONFIG.apiConfig;
+      console.log(`Agent not specified or invalid. Using default agent: ${agentId}`);
     }
+    
+    if (!config || !config.secretId || !config.secretKey || !config.endpoint) {
+      throw new Error(`Invalid API configuration for agent: ${agentId}`);
+    }
+    
+    // 准备请求参数
     const params = {
       TaskId,
       TargetUserIdList
     };
-    const data = await client.UpdateAITranscription(params);
-    res.json(data);
+    
+    // 将参数转换为 JSON 字符串
+    const payload = JSON.stringify(params);
+    
+    // 发送请求
+    const apiConfig = {
+      secretId: config.secretId,
+      secretKey: config.secretKey,
+      host: config.endpoint
+    };
+    
+    console.log(`Sending ModifyAITranscription request for TaskId: ${TaskId}, Users: ${TargetUserIdList.join(',')}`);
+    const data = await sendReq(payload, 'UpdateAITranscription', apiConfig, config.region || 'ap-guangzhou');
+    
+    // 检查响应中是否有错误
+    if (data.Response && data.Response.Error) {
+      console.error('API returned error:', data.Response.Error);
+      return res.status(400).json({ 
+        error: data.Response.Error.Message,
+        code: data.Response.Error.Code
+      });
+    }
+    
+    console.log('Successfully updated transcription targets');
+    res.json(data.Response || data);
   } catch (error) {
-    console.error('Failed to update AI transcription', error);
+    console.error('Failed to update AI transcription:', error);
     return res.status(500).json({ error: error.message });
   }
 });
