@@ -62,11 +62,9 @@ async function startConversation() {
         agentId: appState.selectedAgent
       };
       
-      // Generate an invitation URL
-      const inviteUrl = generateInviteUrl(roomId, sdkAppId, appState.selectedAgent);
-      
-      // Create a persistent invitation panel
-      createInvitationPanel(inviteUrl);
+      // Generate an invitation URL with shorter parameters
+      const inviteUrl = Invitation.generate(roomId, sdkAppId, appState.selectedAgent, null, true);
+      Invitation.createPanel(inviteUrl);
       
       // Save the URL to appState for later use
       appState.inviteUrl = inviteUrl;
@@ -78,6 +76,11 @@ async function startConversation() {
     const responseAI = await startAIConversation(JSON.stringify({ userInfo }));
     appState.taskId = responseAI.TaskId;
     console.log('AI conversation started with task ID:', appState.taskId);
+
+    // Update invitation URL with task ID if available
+    if (appState.inviteUrl && appState.taskId) {
+      Invitation.updateTaskId(appState.taskId);
+    }
 
     // Enable control buttons
     elements.endButton.disabled = false;
@@ -110,6 +113,9 @@ async function stopConversation() {
   elements.muteButton.classList.remove('muted');
   appState.muteState = false;
   updateStatus('room', "Disconnecting...");
+
+  // Hide invitation panel if it exists
+  Invitation.hide();
 
   try {
     // Stop the AI conversation task
@@ -324,35 +330,29 @@ async function initializeApp() {
     setupEventListeners();
     
     // Check if the URL contains invitation parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('join') && urlParams.has('roomId') && urlParams.has('sdkAppId') && urlParams.has('agent')) {
-      // Extract parameters from URL
-      const roomId = urlParams.get('roomId');
-      const sdkAppId = urlParams.get('sdkAppId');
-      const agentId = urlParams.get('agent');
-      const taskId = urlParams.get('taskId');
-      
+    const inviteParams = Invitation.processParams();
+    if (inviteParams) {
       // Show joining message
       addSystemMessage("正在加入聊天室...");
       
       // Set the selected agent
-      appState.selectedAgent = agentId;
+      appState.selectedAgent = inviteParams.agentId;
       
       // Update UI to show selected agent
       await loadAllAgentsInfo();
       const agentSelector = document.getElementById('agent-select');
       if (agentSelector) {
-        agentSelector.value = agentId;
+        agentSelector.value = inviteParams.agentId;
         // Trigger the change event to update UI
         const event = new Event('change');
         agentSelector.dispatchEvent(event);
       }
       
       // Auto-start the conversation
-      await joinGroupChat(roomId, sdkAppId, agentId, taskId);
+      await joinGroupChat(inviteParams.roomId, inviteParams.sdkAppId, inviteParams.agentId, inviteParams.taskId);
       
       // Clear URL parameters after joining
-      window.history.replaceState({}, document.title, window.location.pathname);
+      Invitation.clearParams();
     } else {
       // Normal initialization - load agents
       await loadAllAgentsInfo();
@@ -451,132 +451,6 @@ async function updateTranscriptionTargets(taskId, userIds, agent) {
 }
 
 /**
- * Generate an invitation URL for joining a group chat
- * @param {string|number} roomId - The room ID
- * @param {string|number} sdkAppId - The SDK App ID
- * @param {string} agentId - The agent ID
- * @returns {string} The invitation URL
- */
-function generateInviteUrl(roomId, sdkAppId, agentId) {
-  const baseUrl = window.location.origin;
-  const taskId = appState.taskId || '';
-  
-  // Create URL with all necessary parameters
-  const url = new URL(baseUrl);
-  url.searchParams.append('join', 'true');
-  url.searchParams.append('roomId', roomId);
-  url.searchParams.append('sdkAppId', sdkAppId);
-  url.searchParams.append('agent', agentId);
-  if (taskId) {
-    url.searchParams.append('taskId', taskId);
-  }
-  
-  return url.toString();
-}
-
-/**
- * Copy the invitation URL to clipboard
- */
-function copyInviteUrl() {
-  const inviteUrlInput = document.getElementById('inviteUrlInput');
-  if (!inviteUrlInput) return;
-  
-  // Select the text
-  inviteUrlInput.select();
-  inviteUrlInput.setSelectionRange(0, 99999); // For mobile devices
-  
-  // Copy to clipboard
-  navigator.clipboard.writeText(inviteUrlInput.value)
-    .then(() => {
-      // Show success message
-      const copyBtn = document.querySelector('.copy-btn');
-      const originalText = copyBtn.textContent;
-      copyBtn.textContent = '已复制!';
-      copyBtn.classList.add('copied');
-      
-      // Reset button text after 2 seconds
-      setTimeout(() => {
-        copyBtn.textContent = originalText;
-        copyBtn.classList.remove('copied');
-      }, 2000);
-    })
-    .catch(err => {
-      console.error('Failed to copy: ', err);
-      alert('复制失败，请手动复制链接');
-    });
-}
-
-/**
- * Creates a persistent invitation panel in the UI
- * @param {string} inviteUrl - The invitation URL to display
- */
-function createInvitationPanel(inviteUrl) {
-  // Check if panel already exists
-  let invitePanel = document.getElementById('invitation-panel');
-  if (invitePanel) {
-    // Update existing panel
-    const urlInput = invitePanel.querySelector('.invite-url-input');
-    if (urlInput) urlInput.value = inviteUrl;
-    invitePanel.style.display = 'block';
-    return;
-  }
-  
-  // Create new invitation panel
-  invitePanel = document.createElement('div');
-  invitePanel.id = 'invitation-panel';
-  invitePanel.className = 'invitation-panel';
-  invitePanel.innerHTML = `
-    <div class="invitation-header">
-      <h3>聊天室邀请</h3>
-      <button class="minimize-btn" onclick="toggleInvitePanel()">−</button>
-    </div>
-    <div class="invitation-content">
-      <p>分享此链接邀请朋友加入聊天室：</p>
-      <div class="invite-url-container">
-        <input type="text" readonly value="${inviteUrl}" id="inviteUrlInput" class="invite-url-input" />
-        <button onclick="copyInviteUrl()" class="copy-btn">复制</button>
-      </div>
-      <div class="qrcode-container" id="qrcode-container"></div>
-    </div>
-  `;
-  
-  // Add panel to the DOM
-  document.body.appendChild(invitePanel);
-  
-  // Generate QR code if QR code library is available
-  if (typeof QRCode !== 'undefined') {
-    try {
-      new QRCode(document.getElementById('qrcode-container'), {
-        text: inviteUrl,
-        width: 128,
-        height: 128
-      });
-    } catch (e) {
-      console.error('Failed to generate QR code:', e);
-    }
-  }
-}
-
-/**
- * Toggle the visibility of the invitation panel
- */
-function toggleInvitePanel() {
-  const panel = document.getElementById('invitation-panel');
-  if (!panel) return;
-  
-  const isMinimized = panel.classList.contains('minimized');
-  const btn = panel.querySelector('.minimize-btn');
-  
-  if (isMinimized) {
-    panel.classList.remove('minimized');
-    if (btn) btn.textContent = '−';
-  } else {
-    panel.classList.add('minimized');
-    if (btn) btn.textContent = '+';
-  }
-}
-
-/**
  * Set up event listeners for UI elements
  */
 function setupEventListeners() {
@@ -625,10 +499,6 @@ function setupEventListeners() {
 
 // Initialize when the DOM is fully loaded
 document.addEventListener('DOMContentLoaded', initializeApp);
-
-// Make functions available globally
-window.copyInviteUrl = copyInviteUrl;
-window.toggleInvitePanel = toggleInvitePanel;
 
 /**
  * Set up event listeners for UI elements

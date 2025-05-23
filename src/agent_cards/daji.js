@@ -18,7 +18,7 @@ module.exports = {
         // Agent card information
         AgentCard: {
             name: "妲己",
-            avatar: "/src/agent_cards/assets/daji.jpg",
+            avatar: "/src/agent_cards/assets/daji2.png",
             description: "王者荣耀助手妲己，多人聊天室中只要呼唤她的名字，就会出现解答游戏问题",
             capabilities: ["游戏攻略", "英雄技巧", "装备推荐", "多人聊天"],
             voiceType: "魅惑声音",
