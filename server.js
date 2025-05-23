@@ -105,7 +105,8 @@ app.post('/conversations', (req, res) => {
       },
       "STTConfig": selectedConfig.STTConfig,
       "LLMConfig": JSON.stringify(selectedConfig.LLMConfig),
-      "TTSConfig": JSON.stringify(selectedConfig.TTSConfig)
+      "TTSConfig": JSON.stringify(selectedConfig.TTSConfig),
+      "ExperimentalParams": JSON.stringify(selectedConfig.ExperimentalParams)
     };
 
     client.StartAIConversation(params)
@@ -270,6 +271,41 @@ app.post('/callbacks', (req, res) => {
   } catch (error) {
     console.error('Error in server callback', error);
     res.json({ code: -1, error: error.message });
+  }
+});
+
+/**
+ * Update AI transcription target users
+ * POST /transcription
+ */
+app.post('/transcription', async (req, res) => {
+  try {
+    const { TaskId, TargetUserIdList, agent } = req.body || {};
+    if (!TaskId || !Array.isArray(TargetUserIdList) || TargetUserIdList.length === 0) {
+      return res.status(400).json({
+        error: 'Missing required fields',
+        required: ['TaskId', 'TargetUserIdList']
+      });
+    }
+    let client;
+    if (agent && agentConfig[agent]) {
+      client = createClientForAgent(agent);
+    } else {
+      const firstAgentId = availableAgents[0];
+      if (!firstAgentId) {
+        throw new Error('No agent configuration available for initializing client');
+      }
+      client = createClientForAgent(firstAgentId);
+    }
+    const params = {
+      TaskId,
+      TargetUserIdList
+    };
+    const data = await client.UpdateAITranscription(params);
+    res.json(data);
+  } catch (error) {
+    console.error('Failed to update AI transcription', error);
+    return res.status(500).json({ error: error.message });
   }
 });
 

@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIConversation</title>
+  <script src='https://web.sdk.qcloud.com/trtc/webrtc/v5/dist/trtc.js'></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+
+    #app {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .input-group {
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-group label {
+      display: inline-block;
+      width: 100px;
+      font-weight: 500;
+      color: #333;
+    }
+
+    .input-group input {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+
+    .input-group input:focus {
+      outline: none;
+      border-color: #4a90e2;
+    }
+
+    .chat-list {
+      width: 100%;
+      height: 500px;
+      border: 1px solid #e0e0e0;
+      padding: 20px;
+      background-color: #fafafa;
+      margin: 20px 0;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column-reverse;
+      overflow: auto;
+      border-radius: 8px;
+    }
+
+    .chat-item {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 16px;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .chat-item.user {
+      align-items: flex-end;
+    }
+
+    .chat-item.ai {
+      align-items: flex-start;
+    }
+
+    .chat-id {
+      font-weight: 600;
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 4px;
+    }
+
+    .chat-text {
+      padding: 12px 16px;
+      border-radius: 12px;
+      max-width: 80%;
+      font-size: 15px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    .chat-item.user .chat-text {
+      background-color: #4a90e2;
+      color: white;
+      border-top-right-radius: 4px;
+    }
+
+    .chat-item.ai .chat-text {
+      background-color: #f0f2f5;
+      color: #333;
+      border-top-left-radius: 4px;
+    }
+
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-right: 10px;
+    }
+
+    .start-button {
+      background-color: #4a90e2;
+      color: white;
+    }
+
+    .start-button:hover {
+      background-color: #357abd;
+    }
+
+    .end-button {
+      background-color: #e74c3c;
+      color: white;
+    }
+
+    .end-button:hover {
+      background-color: #c0392b;
+    }
+
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+
+    .button-group {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <div class="input-group">
+      <label for="sdkAppId">SDK App ID:</label>
+      <input type="text" id="sdkAppId" placeholder="Enter SDK App ID">
+    </div>
+    <div class="input-group">
+      <label for="roomId">Room ID:</label>
+      <input type="text" id="roomId" placeholder="Enter Room ID">
+    </div>
+    <div class="input-group">
+      <label for="userId">User ID:</label>
+      <input type="text" id="userId" placeholder="Enter User ID">
+    </div>
+    <div class="input-group">
+      <label for="userSig">User Sig:</label>
+      <input type="text" id="userSig" placeholder="Enter User Sig">
+    </div>
+    <div class="chat-list"></div>
+    <div class="button-group">
+      <button class="start-button" onclick="startConversation()">进入聊天房</button>
+      <button class="end-button" disabled onclick="stopConversation()">退出聊天房</button>
+    </div>
+  </div>
+  <script>
+    const chatConversationDiv = document.querySelector(".chat-list");
+    const startButton = document.querySelector(".start-button");
+    const endButton = document.querySelector(".end-button");
+
+    let messageList = [];
+    let trtcClient;
+
+    // Add URL parameter handling
+    function getUrlParams() {
+      const params = new URLSearchParams(window.location.search);
+      return {
+        sdkAppId: params.get('sdkAppId'),
+        roomId: params.get('roomId'),
+        userId: params.get('userId'),
+        userSig: params.get('userSig')
+      };
+    }
+
+    // Auto-fill form fields from URL parameters
+    window.onload = function() {
+      const params = getUrlParams();
+      if (params.sdkAppId) document.getElementById('sdkAppId').value = params.sdkAppId;
+      if (params.roomId) document.getElementById('roomId').value = params.roomId;
+      if (params.userId) document.getElementById('userId').value = params.userId;
+      if (params.userSig) document.getElementById('userSig').value = params.userSig;
+      
+      // Auto join if all parameters are present
+      if (params.sdkAppId && params.roomId && params.userId && params.userSig) {
+        startConversation();
+      }
+    };
+
+    function ChatBoxRender() {
+      const template = document.createDocumentFragment();
+      messageList.forEach(item => {
+        const itemDiv = document.createElement("div");
+        itemDiv.classList.add("chat-item");
+        if (item.type === 'ai') {
+          itemDiv.classList.add("ai");
+        } else {
+          itemDiv.classList.add("user");
+        }
+        const idTypeDiv = document.createElement("div");
+        idTypeDiv.classList.add("chat-id");
+        idTypeDiv.innerText = item.sender;
+
+        const contentDiv = document.createElement("div");
+        contentDiv.classList.add("chat-text");
+        contentDiv.innerText = item.content;
+
+        itemDiv.appendChild(idTypeDiv);
+        itemDiv.appendChild(contentDiv);
+
+        template.appendChild(itemDiv);
+      })
+      chatConversationDiv.innerHTML = "";
+      chatConversationDiv.appendChild(template);
+    }
+
+    async function startConversation() {
+      try {
+        const sdkAppId = document.getElementById('sdkAppId').value;
+        const roomId = document.getElementById('roomId').value;
+        const userId = document.getElementById('userId').value;
+        const userSig = document.getElementById('userSig').value;
+
+        if (!sdkAppId || !roomId || !userId || !userSig) {
+          alert('Please fill in all TRTC parameters');
+          return;
+        }
+
+        trtcClient = trtcClient || TRTC.create();
+        await trtcClient.enterRoom({
+          roomId,
+          scene: "rtc",
+          sdkAppId,
+          userId,
+          userSig,
+        });
+        trtcClient.on(TRTC.EVENT.CUSTOM_MESSAGE, (event) => {
+          let jsonData = new TextDecoder().decode(event.data);
+          let data = JSON.parse(jsonData);
+          if (data.type === 10000) {
+            const sender = data.sender
+            const text = data.payload.text;
+            const roundId = data.payload.roundid;
+            const isRobot = sender.includes('ai_');
+            const end = data.payload.end;
+            const msgItem = messageList.find(item => item.id === roundId && item.sender === sender);
+            if (msgItem) {
+              msgItem.content = text;
+              msgItem.end = end
+            } else {
+              messageList.unshift({
+                id: roundId,
+                content: text,
+                sender,
+                type: isRobot ? 'ai' : 'user',
+                end: end
+              });
+            }
+            ChatBoxRender();
+          }
+        });
+        await trtcClient?.startLocalAudio();
+      } catch (error) {
+        stopConversation();
+        return;
+      }
+      startButton.disabled = true;
+      endButton.disabled = false;
+    }
+
+    async function stopConversation() {
+      try {
+        await trtcClient.exitRoom();
+      } catch (error) { }
+      trtcClient.destroy();
+      trtcClient = null;
+      endButton.disabled = true;
+      startButton.disabled = false;
+    }
+  </script>
+</body>
+
+</html>

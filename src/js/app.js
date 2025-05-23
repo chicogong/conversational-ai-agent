@@ -7,7 +7,9 @@ const appState = {
   taskId: null,
   muteState: false,
   selectedAgent: null,
-  agentsCache: {} // Cache to store all agent information
+  agentsCache: {}, // Cache to store all agent information
+  roomInfo: null,
+  inviteUrl: null
 };
 
 /**
@@ -46,12 +48,35 @@ async function startConversation() {
       userId,
       userSig
     });
-
+    
+    // If this is a group chat agent, generate and save invitation URL
+    const response = await fetch(`/agents/${appState.selectedAgent}`);
+    const agentInfo = await response.json();
+    
+    // Check if the agent has experimental params indicating it's a group chat
+    if (appState.selectedAgent === 'daji' || appState.selectedAgent === 'group_chat') {
+      // Store the room information for sharing
+      appState.roomInfo = {
+        roomId,
+        sdkAppId,
+        agentId: appState.selectedAgent
+      };
+      
+      // Generate an invitation URL
+      const inviteUrl = generateInviteUrl(roomId, sdkAppId, appState.selectedAgent);
+      
+      // Create a persistent invitation panel
+      createInvitationPanel(inviteUrl);
+      
+      // Save the URL to appState for later use
+      appState.inviteUrl = inviteUrl;
+    }
+    
     updateStatus('room', "✅ Connected");
 
     // Start AI conversation - Fix: Pass userInfo directly without extra nesting
-    const response = await startAIConversation(JSON.stringify({ userInfo }));
-    appState.taskId = response.TaskId;
+    const responseAI = await startAIConversation(JSON.stringify({ userInfo }));
+    appState.taskId = responseAI.TaskId;
     console.log('AI conversation started with task ID:', appState.taskId);
 
     // Enable control buttons
@@ -294,35 +319,294 @@ function updateAgentNavButtons() {
 /**
  * Initialize the application
  */
-function initializeApp() {
+async function initializeApp() {
+  try {
+    setupEventListeners();
+    
+    // Check if the URL contains invitation parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('join') && urlParams.has('roomId') && urlParams.has('sdkAppId') && urlParams.has('agent')) {
+      // Extract parameters from URL
+      const roomId = urlParams.get('roomId');
+      const sdkAppId = urlParams.get('sdkAppId');
+      const agentId = urlParams.get('agent');
+      const taskId = urlParams.get('taskId');
+      
+      // Show joining message
+      addSystemMessage("正在加入聊天室...");
+      
+      // Set the selected agent
+      appState.selectedAgent = agentId;
+      
+      // Update UI to show selected agent
+      await loadAllAgentsInfo();
+      const agentSelector = document.getElementById('agent-select');
+      if (agentSelector) {
+        agentSelector.value = agentId;
+        // Trigger the change event to update UI
+        const event = new Event('change');
+        agentSelector.dispatchEvent(event);
+      }
+      
+      // Auto-start the conversation
+      await joinGroupChat(roomId, sdkAppId, agentId, taskId);
+      
+      // Clear URL parameters after joining
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else {
+      // Normal initialization - load agents
+      await loadAllAgentsInfo();
+    }
+  } catch (error) {
+    console.error('Failed to initialize app:', error);
+    addSystemMessage(`初始化失败: ${error.message}`);
+  }
+}
+
+/**
+ * Join a group chat via invitation link
+ */
+async function joinGroupChat(roomId, sdkAppId, agentId, taskId) {
+  try {
+    // Disable start button while connecting
+    elements.startButton.disabled = true;
+    updateStatus('room', "Connecting to shared room...");
+    
+    // Get user credentials for this specific agent
+    const credentials = await fetch('/credentials', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ agentId })
+    }).then(res => res.json());
+    
+    // Create user info object
+    const userInfo = {
+      sdkAppId: parseInt(sdkAppId),
+      roomId: parseInt(roomId),
+      userId: credentials.userId,
+      userSig: credentials.userSig,
+      robotId: credentials.robotId,
+      robotSig: credentials.robotSig,
+      agent: agentId
+    };
+    
+    // Save user information
+    setUserIds(credentials.userId, credentials.robotId);
+    
+    // Enter the TRTC room
+    await enterTRTCRoom({
+      roomId: parseInt(roomId),
+      sdkAppId: parseInt(sdkAppId),
+      userId: credentials.userId,
+      userSig: credentials.userSig
+    });
+    
+    updateStatus('room', "✅ Connected to shared room");
+    
+    // If taskId is provided, we join an existing conversation
+    if (taskId) {
+      appState.taskId = taskId;
+      addSystemMessage("已加入现有对话！");
+      
+      // Update transcription to include the new user
+      await updateTranscriptionTargets(taskId, [credentials.userId], agentId);
+    } else {
+      // Start a new AI conversation
+      const response = await startAIConversation(JSON.stringify({ userInfo }));
+      appState.taskId = response.TaskId;
+      addSystemMessage("已创建新的对话！");
+    }
+    
+    console.log('Joined group chat with task ID:', appState.taskId);
+  } catch (error) {
+    console.error('Failed to join group chat:', error);
+    addSystemMessage(`加入聊天室失败: ${error.message}`);
+    elements.startButton.disabled = false;
+    updateStatus('room', "❌ Connection failed");
+  }
+}
+
+/**
+ * Update transcription targets to include new user
+ */
+async function updateTranscriptionTargets(taskId, userIds, agent) {
+  try {
+    const response = await fetch('/transcription', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        TaskId: taskId,
+        TargetUserIdList: userIds,
+        agent: agent
+      })
+    });
+    
+    const result = await response.json();
+    console.log('Updated transcription targets:', result);
+    return result;
+  } catch (error) {
+    console.error('Failed to update transcription targets:', error);
+    throw error;
+  }
+}
+
+/**
+ * Generate an invitation URL for joining a group chat
+ * @param {string|number} roomId - The room ID
+ * @param {string|number} sdkAppId - The SDK App ID
+ * @param {string} agentId - The agent ID
+ * @returns {string} The invitation URL
+ */
+function generateInviteUrl(roomId, sdkAppId, agentId) {
+  const baseUrl = window.location.origin;
+  const taskId = appState.taskId || '';
+  
+  // Create URL with all necessary parameters
+  const url = new URL(baseUrl);
+  url.searchParams.append('join', 'true');
+  url.searchParams.append('roomId', roomId);
+  url.searchParams.append('sdkAppId', sdkAppId);
+  url.searchParams.append('agent', agentId);
+  if (taskId) {
+    url.searchParams.append('taskId', taskId);
+  }
+  
+  return url.toString();
+}
+
+/**
+ * Copy the invitation URL to clipboard
+ */
+function copyInviteUrl() {
+  const inviteUrlInput = document.getElementById('inviteUrlInput');
+  if (!inviteUrlInput) return;
+  
+  // Select the text
+  inviteUrlInput.select();
+  inviteUrlInput.setSelectionRange(0, 99999); // For mobile devices
+  
+  // Copy to clipboard
+  navigator.clipboard.writeText(inviteUrlInput.value)
+    .then(() => {
+      // Show success message
+      const copyBtn = document.querySelector('.copy-btn');
+      const originalText = copyBtn.textContent;
+      copyBtn.textContent = '已复制!';
+      copyBtn.classList.add('copied');
+      
+      // Reset button text after 2 seconds
+      setTimeout(() => {
+        copyBtn.textContent = originalText;
+        copyBtn.classList.remove('copied');
+      }, 2000);
+    })
+    .catch(err => {
+      console.error('Failed to copy: ', err);
+      alert('复制失败，请手动复制链接');
+    });
+}
+
+/**
+ * Creates a persistent invitation panel in the UI
+ * @param {string} inviteUrl - The invitation URL to display
+ */
+function createInvitationPanel(inviteUrl) {
+  // Check if panel already exists
+  let invitePanel = document.getElementById('invitation-panel');
+  if (invitePanel) {
+    // Update existing panel
+    const urlInput = invitePanel.querySelector('.invite-url-input');
+    if (urlInput) urlInput.value = inviteUrl;
+    invitePanel.style.display = 'block';
+    return;
+  }
+  
+  // Create new invitation panel
+  invitePanel = document.createElement('div');
+  invitePanel.id = 'invitation-panel';
+  invitePanel.className = 'invitation-panel';
+  invitePanel.innerHTML = `
+    <div class="invitation-header">
+      <h3>聊天室邀请</h3>
+      <button class="minimize-btn" onclick="toggleInvitePanel()">−</button>
+    </div>
+    <div class="invitation-content">
+      <p>分享此链接邀请朋友加入聊天室：</p>
+      <div class="invite-url-container">
+        <input type="text" readonly value="${inviteUrl}" id="inviteUrlInput" class="invite-url-input" />
+        <button onclick="copyInviteUrl()" class="copy-btn">复制</button>
+      </div>
+      <div class="qrcode-container" id="qrcode-container"></div>
+    </div>
+  `;
+  
+  // Add panel to the DOM
+  document.body.appendChild(invitePanel);
+  
+  // Generate QR code if QR code library is available
+  if (typeof QRCode !== 'undefined') {
+    try {
+      new QRCode(document.getElementById('qrcode-container'), {
+        text: inviteUrl,
+        width: 128,
+        height: 128
+      });
+    } catch (e) {
+      console.error('Failed to generate QR code:', e);
+    }
+  }
+}
+
+/**
+ * Toggle the visibility of the invitation panel
+ */
+function toggleInvitePanel() {
+  const panel = document.getElementById('invitation-panel');
+  if (!panel) return;
+  
+  const isMinimized = panel.classList.contains('minimized');
+  const btn = panel.querySelector('.minimize-btn');
+  
+  if (isMinimized) {
+    panel.classList.remove('minimized');
+    if (btn) btn.textContent = '−';
+  } else {
+    panel.classList.add('minimized');
+    if (btn) btn.textContent = '+';
+  }
+}
+
+/**
+ * Set up event listeners for UI elements
+ */
+function setupEventListeners() {
   // Get DOM elements
   const agentSelect = document.getElementById('agent-select');
   const prevAgentBtn = document.getElementById('prev-agent-btn');
   const nextAgentBtn = document.getElementById('next-agent-btn');
   
   // Set up agent selection handling
-  agentSelect.addEventListener('change', () => {
-    appState.selectedAgent = agentSelect.value;
-    
-    // Enable start button
-    if (elements.startButton) {
-      elements.startButton.disabled = false;
-      elements.startButton.title = "";
-    }
-    
-    // Display agent info
-    showAgentInfo(appState.selectedAgent);
-    
-    // Update navigation buttons
-    updateAgentNavButtons();
-  });
+  if (agentSelect) {
+    agentSelect.addEventListener('change', () => {
+      appState.selectedAgent = agentSelect.value;
+      
+      // Enable start button
+      if (elements.startButton) {
+        elements.startButton.disabled = false;
+        elements.startButton.title = "";
+      }
+      
+      // Display agent info
+      showAgentInfo(appState.selectedAgent);
+      
+      // Update navigation buttons
+      updateAgentNavButtons();
+    });
+  }
   
   // Set up agent navigation buttons
   if (prevAgentBtn) prevAgentBtn.addEventListener('click', () => changeAgentSelection(-1));
   if (nextAgentBtn) nextAgentBtn.addEventListener('click', () => changeAgentSelection(1));
-  
-  // Load all agents info
-  loadAllAgentsInfo();
   
   // Set up main button event listeners
   elements.startButton.addEventListener('click', startConversation);
@@ -340,4 +624,13 @@ function initializeApp() {
 }
 
 // Initialize when the DOM is fully loaded
-document.addEventListener('DOMContentLoaded', initializeApp); 
+document.addEventListener('DOMContentLoaded', initializeApp);
+
+// Make functions available globally
+window.copyInviteUrl = copyInviteUrl;
+window.toggleInvitePanel = toggleInvitePanel;
+
+/**
+ * Set up event listeners for UI elements
+ */
+window.setupEventListeners = setupEventListeners; 
