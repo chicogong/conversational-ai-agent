@@ -1,31 +1,31 @@
 /**
- * 腾讯云TRTC API请求工具
- * 基于TC3-HMAC-SHA256签名算法
+ * Tencent Cloud TRTC API Request Tool
+ * Based on TC3-HMAC-SHA256 Signature Algorithm
  */
 const crypto = require('crypto');
 const https = require('https');
 
 
 /**
- * 发送API请求到腾讯云TRTC服务
- * @param {string} payload JSON格式的请求参数
- * @param {string} action API动作名称
- * @param {Object} config 配置信息，包含secretId、secretKey和host
- * @param {string} region 地区，默认为ap-guangzhou
- * @returns {Promise<Object>} API响应结果
+ * Send API request to Tencent Cloud TRTC service
+ * @param {string} payload JSON formatted request parameters
+ * @param {string} action API action name
+ * @param {Object} config Configuration information, including secretId, secretKey and host
+ * @param {string} region Region, default is ap-guangzhou
+ * @returns {Promise<Object>} API response result
  */
 function sendReq(payload, action, config, region = "ap-guangzhou") {
     return new Promise((resolve, reject) => {
         if (!config || !config.secretId || !config.secretKey || !config.host) {
-            return reject(new Error('配置信息不完整，需要提供secretId、secretKey和host'));
+            return reject(new Error('Incomplete configuration, secretId, secretKey and host are required'));
         }
 
 
         /**
-         * HMAC-SHA256签名
-         * @param {Buffer} key 密钥
-         * @param {string} msg 消息
-         * @returns {Buffer} 签名结果
+         * HMAC-SHA256 signature
+         * @param {Buffer} key Secret key
+         * @param {string} msg Message
+         * @returns {Buffer} Signature result
          */
         function sign(key, msg) {
             return crypto.createHmac('sha256', key).update(msg).digest();
@@ -37,16 +37,16 @@ function sendReq(payload, action, config, region = "ap-guangzhou") {
         const version = "2019-07-22";
 
 
-        console.log(`请求TRTC API: ${action}, region: ${region}, host: ${host}`);
+        console.log(`Requesting TRTC CAPI: ${action}, region: ${region}, host: ${host}`);
 
 
-        // 准备请求参数
+        // Prepare request parameters
         const algorithm = "TC3-HMAC-SHA256";
         const timestamp = Math.floor(Date.now() / 1000);
         const date = new Date(timestamp * 1000).toISOString().split('T')[0];
 
 
-        // 构造规范请求串
+        // Construct canonical request string
         const httpRequestMethod = "POST";
         const canonicalUri = "/";
         const canonicalQuerystring = "";
@@ -66,7 +66,7 @@ function sendReq(payload, action, config, region = "ap-guangzhou") {
         ].join('\n');
 
 
-        // 构造待签名字符串
+        // Construct string to sign
         const credentialScope = `${date}/${service}/tc3_request`;
         const hashedCanonicalRequest = crypto.createHash('sha256').update(canonicalRequest).digest('hex');
         const stringToSign = [
@@ -77,18 +77,18 @@ function sendReq(payload, action, config, region = "ap-guangzhou") {
         ].join('\n');
 
 
-        // 计算签名
+        // Calculate signature
         const secretDate = sign(Buffer.from(`TC3${secretKey}`), date);
         const secretService = sign(secretDate, service);
         const secretSigning = sign(secretService, "tc3_request");
         const signature = crypto.createHmac('sha256', secretSigning).update(stringToSign).digest('hex');
 
 
-        // 构造授权信息
+        // Construct authorization information
         const authorization = `${algorithm} Credential=${secretId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
 
 
-        // 构造请求头
+        // Construct request headers
         const headers = {
             "Authorization": authorization,
             "Content-Type": contentType,
@@ -100,32 +100,32 @@ function sendReq(payload, action, config, region = "ap-guangzhou") {
         };
 
 
-        // 发送请求
+        // Send request
         const options = {
             hostname: host,
             port: 443,
             path: '/',
             method: 'POST',
             headers: headers,
-            timeout: 10000 // 10秒超时
+            timeout: 10000 // 10 seconds timeout
         };
 
 
-        // 记录请求详情（不包含敏感信息）
-        console.log(`API 请求详情:
-            - 动作: ${action}
-            - 主机: ${host}
-            - 区域: ${region}
-            - 时间戳: ${timestamp}
-            - 版本: ${version}
+        // Record request details (without sensitive information)
+        console.log(`CAPI Request Details:
+            - Action: ${action}
+            - Host: ${host}
+            - Region: ${region}
+            - Timestamp: ${timestamp}
+            - Version: ${version}
         `);
 
 
         const req = https.request(options, (res) => {
             let data = '';
             
-            // 记录响应状态码
-            console.log(`API 响应状态码: ${res.statusCode}`);
+            // Record response status code
+            console.log(`CAPI Response Status Code: ${res.statusCode}`);
             
             res.on('data', (chunk) => {
                 data += chunk;
@@ -133,35 +133,34 @@ function sendReq(payload, action, config, region = "ap-guangzhou") {
             
             res.on('end', () => {
                 try {
-                    // 尝试解析响应
+                    // Try to parse response
                     const response = JSON.parse(data);
                     
-                    // 检查是否有错误
+                    // Check if there's an error
                     if (response.Response && response.Response.Error) {
-                        console.error(`API 错误: ${response.Response.Error.Code} - ${response.Response.Error.Message}`);
+                        console.error(`CAPI Error: ${response.Response.Error.Code} - ${response.Response.Error.Message}`);
                     } else {
-                        console.log(`API 请求成功: ${action}`);
+                        console.log(`CAPI Request Successful: ${action}`);
                     }
                     
                     resolve(response);
                 } catch (error) {
-                    console.error(`解析响应失败: ${error.message}`);
-                    console.error(`原始响应: ${data}`);
-                    reject(new Error(`解析响应失败: ${error.message}`));
+                    console.error(`Failed to parse response: ${error.message}, raw response: ${data}`);
+                    reject(new Error(`Failed to parse response: ${error.message}`));
                 }
             });
         });
 
 
-        // 设置请求超时
+        // Set request timeout
         req.setTimeout(10000, () => {
             req.destroy();
-            reject(new Error('请求超时'));
+            reject(new Error('Request timeout'));
         });
 
 
         req.on('error', (error) => {
-            console.error(`API 请求错误: ${error.message}`);
+            console.error(`CAPI Request Error: ${error.message}`);
             reject(error);
         });
 

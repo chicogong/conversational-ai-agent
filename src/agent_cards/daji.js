@@ -91,6 +91,7 @@ module.exports = {
                 target_user_list: ["user_id_1", "user_id_2"],
             },
             intent_recognition: {
+                temperature: 0.1,
                 system_prompt: `
                 你是一个意图识别助手，负责判断用户是否想与“小妲己”（王者荣耀助手）对话。
 
