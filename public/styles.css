@@ -261,4 +261,15 @@
     right: 10px;
     left: auto;
   }
+}
+
+/* Order Summary Styles - Simplified */
+.order-summary {
+  background-color: #f8f9fa;
+  border-left: 4px solid #4CAF50;
+  padding: 12px;
+  margin: 8px 0;
+  border-radius: 4px;
+  font-family: monospace;
+  white-space: pre-line;
 } 

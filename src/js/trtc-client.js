@@ -78,6 +78,32 @@ async function exitTRTCRoom() {
 }
 
 /**
+ * Generate order summary from conversation
+ * @param {string} agentId - Current agent ID
+ * @returns {Promise} Promise that resolves when summary is generated
+ */
+async function generateOrderSummary(agentId = 'take_order') {
+  try {
+    // Get current conversation messages
+    const conversationData = getConversationMessages();
+    
+    // Use API module for consistency
+    const result = await apiRequest('/order-summary', {
+      conversation: conversationData,
+      agentId: agentId
+    });
+    
+    if (result.success && result.summary) {
+      addSystemMessage(`📋 订单总结:\n${result.summary}`);
+    } else {
+      addSystemMessage(`Order summary generation failed, ${result}`);
+    }
+  } catch (error) {
+    addSystemMessage(`Order summary generation failed, ${error}`);
+  }
+}
+
+/**
  * Destroy TRTC client
  */
 function destroyTRTCClient() {

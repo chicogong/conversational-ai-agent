@@ -125,4 +125,17 @@ function resetUI() {
   elements.interruptButton.disabled = true;
   updateStatus('room', "Disconnected");
   updateStatus('ai', "AI NotReady");
+}
+
+/**
+ * Get conversation messages for analysis
+ * @returns {Array} Array of conversation messages
+ */
+function getConversationMessages() {
+  return messages.map(msg => ({
+    id: msg.id,
+    content: msg.content,
+    sender: msg.sender,
+    type: msg.type
+  }));
 } 

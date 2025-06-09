@@ -129,6 +129,17 @@ async function stopConversation() {
     console.error('Error stopping AI conversation:', error);
   }
 
+  // Generate order summary for take_order agent
+  if (appState.selectedAgent === 'take_order') {
+    try {
+      console.log('Generating order summary for coffee order...');
+      await generateOrderSummary(appState.selectedAgent);
+    } catch (error) {
+      console.error('Error generating order summary:', error);
+      addSystemMessage(`Order summary generation failed, ${error.message}`);
+    }
+  }
+
   try {
     // Exit the TRTC room
     await exitTRTCRoom();

@@ -6,6 +6,7 @@ const tencentcloud = require("tencentcloud-sdk-nodejs-trtc");
 const TLSSigAPIv2 = require('tls-sig-api-v2');
 const agentConfig = require('./src/agent_cards');
 const { sendReq } = require('./capi');
+const OpenAI = require('openai');
 
 const TrtcClient = tencentcloud.trtc.v20190722.Client;
 
@@ -342,6 +343,96 @@ app.post('/transcription', async (req, res) => {
   } catch (error) {
     console.error('Failed to update AI transcription:', error);
     return res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Summarize order from conversation
+ * POST /order-summary
+ */
+app.post('/order-summary', async (req, res) => {
+  try {
+    const { conversation, agentId } = req.body;
+    
+    if (!conversation || !Array.isArray(conversation)) {
+      return res.status(400).json({ 
+        error: 'Missing conversation data' 
+      });
+    }
+    
+    // Get LLM configuration
+    const selectedConfig = agentConfig[agentId || 'take_order']?.CONFIG;
+    if (!selectedConfig?.LLMConfig) {
+      return res.status(400).json({ 
+        error: `LLM configuration not found for agent: ${agentId}` 
+      });
+    }
+    
+    const llmConfig = selectedConfig.LLMConfig;
+    
+    // Initialize OpenAI client
+    const openai = new OpenAI({
+      apiKey: llmConfig.APIKey,
+      baseURL: llmConfig.APIUrl.replace('chat/completions', '')
+    });
+    
+    // Format conversation
+    const conversationText = conversation
+      .filter(msg => msg.content?.trim())
+      .map(msg => `${msg.type === 'ai' ? 'AI助手' : '客户'}: ${msg.content}`)
+      .join('\n');
+    
+    // Generate prompt based on agent type
+    const isOrderAgent = agentId === 'take_order';
+    const summaryPrompt = isOrderAgent 
+      ? `分析咖啡点单对话，提取订单信息：
+
+对话内容：
+${conversationText}
+
+请根据以下咖啡店菜单信息分析订单， 
+如果客户没有提到咖啡种类，则默认是拿铁，
+如果客户没有提到杯子大小，则默认是中杯，
+如果客户没有提到温度，则默认是热饮，
+如果客户没有提到附加选项，则默认是加糖
+
+咖啡种类：美式咖啡、拿铁、卡布奇诺、摩卡、焦糖玛奇朵、浓缩咖啡
+温度选择：热饮、冰饮
+杯子大小：小杯(12oz)、中杯(16oz)、大杯(20oz)
+附加选项：糖浆、奶泡、豆奶、燕麦奶、加糖、不加糖
+
+如果客户说不要了、不买了、不点了、不喝了、不想要了，则输出：{"coffee_type": "no_order"}
+
+请以JSON格式输出订单信息：
+{
+  "coffee_type": "具体咖啡种类（如：拿铁、美式咖啡等）",
+  "temperature": "热饮或冰饮", 
+  "size": "小杯、中杯或大杯",
+  "additions": ["附加选项列表"],
+  "summary": "完整订单总结",
+  "price_estimate": "预估价格（如果提到）",
+  "customer_notes": "客户特殊要求"
+}`
+      : `总结以下对话的关键信息：\n\n${conversationText}\n\n请提取关键信息并总结。`;
+
+    // Call OpenAI API
+    const completion = await openai.chat.completions.create({
+      model: llmConfig.Model,
+      messages: [
+        { role: "system", content: "你是一个专业的对话分析助手。" },
+        { role: "user", content: summaryPrompt }
+      ],
+      temperature: 0.3,
+      max_tokens: 500
+    });
+
+    const summary = completion.choices[0]?.message?.content?.trim() || '总结生成失败';
+    console.log(`Order summary prompt: ${summaryPrompt}\n summary generated: ${summary}`);
+    res.json({ success: true, summary });
+
+  } catch (error) {
+    console.error('Error in order summary:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
