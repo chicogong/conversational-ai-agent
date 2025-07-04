@@ -436,6 +436,78 @@ ${conversationText}
   }
 });
 
+/**
+ * Start simultaneous interpretation - API forwarding only
+ * POST /interpretation
+ */
+app.post('/interpretation', (req, res) => {
+  try {
+    const { sdkAppId, roomId, userId, userSig, robotId, robotSig, agentConfig: clientAgentConfig, sttConfig, llmConfig, ttsConfig, experimentalParams } = req.body || {};
+    
+    // Basic validation for required fields
+    if (!sdkAppId || !roomId || !userId || !userSig || !robotId || !robotSig || !clientAgentConfig || !sttConfig || !llmConfig || !ttsConfig || !experimentalParams) {
+      return res.status(400).json({ 
+        error: 'Missing required fields',
+        required: ['sdkAppId', 'roomId', 'userId', 'userSig', 'robotId', 'robotSig', 'agentConfig', 'sttConfig', 'llmConfig', 'ttsConfig', 'experimentalParams']
+      });
+    }
+    
+    // Use default client - get first available agent for client creation
+    const availableAgentIds = Object.keys(agentConfig);
+    const defaultAgentId = availableAgentIds[0];
+    
+    if (!defaultAgentId) {
+      return res.status(500).json({ 
+        error: 'No agent configuration available for client creation' 
+      });
+    }
+    
+    const client = createClientForAgent(defaultAgentId);
+    
+    // Prepare API parameters - direct forwarding from frontend
+    const params = {
+      "SdkAppId": sdkAppId,
+      "RoomId": roomId.toString(),
+      "AgentConfig": {
+        "UserId": robotId,
+        "UserSig": robotSig,
+        "TargetUserId": userId,
+        ...clientAgentConfig
+      },
+      "STTConfig": sttConfig,
+      "LLMConfig": JSON.stringify(llmConfig),
+      "TTSConfig": JSON.stringify(ttsConfig),
+      "ExperimentalParams": JSON.stringify(experimentalParams)
+    };
+    
+    console.log('Forwarding interpretation request to API');
+    
+    client.StartAIConversation(params)
+      .then(data => {
+        res.json({
+          ...data,
+          userInfo: {
+            sdkAppId: sdkAppId,
+            roomId: roomId,
+            userId: userId,
+            userSig: userSig,
+            robotId: robotId,
+            robotSig: robotSig,
+            agent: 'simultaneous_interpreter'
+          }
+        });
+      })
+      .catch(err => {
+        console.error('Failed to start AI conversation', err);
+        return res.status(500).json({ error: err.message });
+      });
+  } catch (error) {
+    console.error('Error in interpretation', error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '127.0.0.1';
 app.listen(PORT, HOST, () => console.log(`App running at http://${HOST}:${PORT}/`));
