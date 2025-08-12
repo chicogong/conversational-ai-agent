@@ -306,6 +306,101 @@
         
         const trtcState = { client: null, currentUserId: null, botUserId: null };
         
+        // 支持的翻译语言配置
+        const SUPPORTED_LANGUAGES = [
+            { code: 'zh', name: '中文' },
+            { code: 'en', name: '英文' },
+            { code: 'ja', name: '日文' },
+            { code: 'ko', name: '韩文' },
+            { code: 'es', name: '西班牙文' },
+            { code: 'fr', name: '法文' },
+            { code: 'de', name: '德文' },
+            { code: 'ru', name: '俄文' },
+            { code: 'it', name: '意大利文' },
+            { code: 'pt', name: '葡萄牙文' },
+            { code: 'ar', name: '阿拉伯文' },
+            { code: 'th', name: '泰文' },
+            { code: 'vi', name: '越南文' },
+            { code: 'hi', name: '印地文' }
+        ];
+        
+        // 消息类型常量
+        const MESSAGE_TYPES = {
+            NEW_PROTOCOL: 10000,
+            STATUS: 10001,
+            SUBTITLE: 'subtitle',
+            TRANSCRIPTION: 'transcription',
+            TRANSLATE_SUBTITLE: 'translate_subtitle',
+            TRANSLATION: 'translation'
+        };
+        
+        /**
+         * 解析新协议消息 (type: 10000)
+         * 用于处理新版本的转录协议格式
+         * @param {Object} message - 原始消息对象
+         * @returns {Object} 标准化的消息对象
+         */
+        function parseNewProtocolMessage(message) {
+            const { sender, payload } = message;
+            const { result_type, text, translation_text, translation_language } = payload;
+            
+            return {
+                sender: sender,
+                text: text || '',
+                translationText: translation_text || '',
+                translationLanguage: translation_language || '',
+                resultType: result_type || '',
+                protocolVersion: 'new',
+                originalMessage: message
+            };
+        }
+        
+        /**
+         * 解析旧协议消息 (string type)
+         * 用于处理旧版本的转录协议格式
+         * @param {Object} message - 原始消息对象
+         * @returns {Object} 标准化的消息对象
+         */
+        function parseLegacyProtocolMessage(message) {
+            const { type, userid, text, translation_text, translation_language } = message;
+            
+            return {
+                sender: userid || 'unknown',
+                text: text || '',
+                translationText: translation_text || '',
+                translationLanguage: translation_language || '',
+                resultType: type || '',
+                protocolVersion: 'legacy',
+                originalMessage: message
+            };
+        }
+        
+        // 统一消息解析函数
+        function parseTranscriptionMessage(rawMessage) {
+            try {
+                // 检测协议类型
+                if (rawMessage.type === 10000) {
+                    // 新协议格式
+                    return parseNewProtocolMessage(rawMessage);
+                } else if (typeof rawMessage.type === 'string') {
+                    // 旧协议格式
+                    return parseLegacyProtocolMessage(rawMessage);
+                } else {
+                    console.warn('⚠️ 未知的协议格式:', rawMessage);
+                    return null;
+                }
+            } catch (error) {
+                console.error('❌ 协议解析失败:', error);
+                return null;
+            }
+        }
+        
+        // 获取语言显示名称
+        function getLanguageName(code) {
+            const lang = SUPPORTED_LANGUAGES.find(l => l.code === code);
+            return lang ? lang.name : code.toUpperCase();
+        }
+        
         // DOM 元素
         const toggleBtn = document.getElementById('toggleBtn');
         const transcriptionStatus = document.getElementById('transcriptionStatus');
@@ -356,65 +451,69 @@
             }
         }
         
-        // 处理TRTC消息
+        // 处理TRTC消息 - 统一入口
         function handleTRTCMessage(event) {
             try {
-                const message = JSON.parse(new TextDecoder().decode(event.data));
-                console.log('📨 TRTC message:', message);
+                const rawMessage = JSON.parse(new TextDecoder().decode(event.data));
+                console.log('📨 TRTC原始消息:', rawMessage);
                 
-                if (message.type === 10000) {
-                    handleTranscriptionMessage(message);
-                } else if (typeof message.type === 'string') {
-                    handleLegacyMessage(message);
+                // 使用统一解析函数
+                const parsedMessage = parseTranscriptionMessage(rawMessage);
+                if (!parsedMessage) {
+                    console.warn('⚠️ 无法解析的消息格式:', rawMessage);
+                    return;
                 }
+                
+                console.log('📋 解析后消息:', parsedMessage);
+                
+                // 统一处理逻辑
+                handleParsedMessage(parsedMessage);
+                
             } catch (error) {
-                console.error('❌ Error parsing message:', error);
+                console.error('❌ 消息处理失败:', error);
             }
         }
         
-        // 处理转录消息
-        function handleTranscriptionMessage(message) {
-            const { sender, payload } = message;
-            const { result_type, text, translation_text, translation_language } = payload;
+        // 处理解析后的消息
+        function handleParsedMessage(message) {
+            const { sender, text, translationText, translationLanguage, resultType } = message;
             
-            if (!result_type && text) {
+            // 如果没有明确的结果类型但有文本，默认为实时字幕
+            if (!resultType && text) {
                 updateSubtitle(sender, text);
                 return;
             }
             
-            switch (result_type) {
-                case 'subtitle':
-                    if (text) updateSubtitle(sender, text);
+            // 根据结果类型处理消息
+            switch (resultType) {
+                case MESSAGE_TYPES.SUBTITLE:
+                    if (text) {
+                        updateSubtitle(sender, text, '', false);
+                    }
                     break;
-                case 'transcription':
-                    if (text) addTranscription(sender, text);
+                    
+                case MESSAGE_TYPES.TRANSCRIPTION:
+                    if (text) {
+                        addTranscription(sender, text, message);
+                    }
                     break;
-                case 'translate_subtitle':
-                    if (translation_text) updateSubtitle(sender, translation_text, translation_language, true);
+                    
+                case MESSAGE_TYPES.TRANSLATE_SUBTITLE:
+                    if (translationText) {
+                        const langName = getLanguageName(translationLanguage);
+                        updateSubtitle(sender, translationText, langName, true);
+                    }
                     break;
-                case 'translation':
-                    if (translation_text) addTranslation(sender, text, translation_text, translation_language);
+                    
+                case MESSAGE_TYPES.TRANSLATION:
+                    if (translationText) {
+                        const langName = getLanguageName(translationLanguage);
+                        addTranslation(sender, text, translationText, langName, message);
+                    }
                     break;
-            }
-        }
-        
-        // 处理旧版消息
-        function handleLegacyMessage(message) {
-            const { type, userid, text, translation_text, translation_language } = message;
-            
-            switch (type) {
-                case 'subtitle':
-                    if (text) updateSubtitle(userid, text);
-                    break;
-                case 'transcription':
-                    if (text) addTranscription(userid, text);
-                    break;
-                case 'translate_subtitle':
-                    if (translation_text) updateSubtitle(userid, translation_text, translation_language, true);
-                    break;
-                case 'translation':
-                    if (translation_text) addTranslation(userid, text, translation_text, translation_language);
-                    break;
+                    
+                default:
+                    console.warn('⚠️ 未知的消息类型:', resultType);
             }
         }
 
@@ -449,7 +548,7 @@
                 transcriptionOutput.appendChild(subtitleElement);
             }
             
-            const prefix = isTranslation ? `[实时翻译-${language}]` : '[实时]';
+            const prefix = isTranslation && language ? `[实时翻译-${language}]` : '[实时]';
             subtitleElement.innerHTML = `
                 <div class="timestamp">${new Date().toLocaleTimeString()}</div>
                 <div>${prefix} ${sender}: ${text}</div>
@@ -459,7 +558,7 @@
         }
 
         // 添加最终转录结果
-        function addTranscription(sender, text) {
+        function addTranscription(sender, text, originalMessage = null) {
             ensureOutputReady();
             
             // 移除对应的实时字幕
@@ -468,9 +567,15 @@
             
             const element = document.createElement('div');
             element.className = 'transcription-line';
+            
+            // 添加调试信息
+            const debugInfo = originalMessage ? 
+                `<small class="debug-info" style="color: #a0aec0; font-size: 0.8em; margin-top: 4px; display: block;">协议: ${originalMessage.protocol || 'legacy'}</small>` : '';
+            
             element.innerHTML = `
                 <div class="timestamp">${new Date().toLocaleTimeString()}</div>
                 <div>[转录] ${sender}: ${text}</div>
+                ${debugInfo}
             `;
             
             transcriptionOutput.appendChild(element);
@@ -478,7 +583,7 @@
         }
 
         // 添加翻译结果
-        function addTranslation(sender, originalText, translationText, language) {
+        function addTranslation(sender, originalText, translationText, language, originalMessage = null) {
             ensureOutputReady();
             
             // 移除对应的实时翻译字幕
@@ -497,9 +602,15 @@
             
             const transElement = document.createElement('div');
             transElement.className = 'translation-line';
+            
+            // 添加调试信息
+            const debugInfo = originalMessage ? 
+                `<small class="debug-info" style="color: #a0aec0; font-size: 0.8em; margin-top: 4px; display: block;">协议: ${originalMessage.protocol || 'legacy'} | 语言代码: ${originalMessage.translationLanguage || 'unknown'}</small>` : '';
+            
             transElement.innerHTML = `
                 <div class="timestamp">${new Date().toLocaleTimeString()}</div>
                 <div>[翻译-${language}] ${sender}: ${translationText}</div>
+                ${debugInfo}
             `;
             
             transcriptionOutput.appendChild(transElement);
