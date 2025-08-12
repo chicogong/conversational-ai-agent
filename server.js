@@ -436,6 +436,54 @@ ${conversationText}
   }
 });
 
+// Start AI transcription
+app.post('/start-transcription', async (req, res) => {
+  try {
+    const { SdkAppId, RoomId, TranscriptionParams, RecognizeConfig, agent } = req.body;
+    
+    if (!SdkAppId || !RoomId || !TranscriptionParams) {
+      return res.status(400).json({ 
+        error: 'Missing required fields: SdkAppId, RoomId, TranscriptionParams'
+      });
+    }
+    
+    const agentId = agent && agentConfig[agent] ? agent : availableAgents[0];
+    if (!agentId) {
+      throw new Error('No agent configuration available');
+    }
+    
+    const client = createClientForAgent(agentId);
+    
+    const params = {
+      SdkAppId,
+      RoomId: RoomId.toString(),
+      TranscriptionParams
+    };
+    
+    if (RecognizeConfig) {
+      params.RecognizeConfig = RecognizeConfig;
+    }
+    
+    console.log('🎙️ Starting transcription:', { SdkAppId, RoomId, agentId });
+    
+    const data = await client.StartAITranscription(params);
+    
+    res.json({
+      ...data,
+      userInfo: {
+        sdkAppId: SdkAppId,
+        roomId: RoomId,
+        userId: TranscriptionParams.UserId,
+        robotId: TranscriptionParams.UserId,
+        agent: agentId
+      }
+    });
+  } catch (error) {
+    console.error('❌ Transcription start failed:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 /**
  * Start simultaneous interpretation - API forwarding only
  * POST /interpretation
