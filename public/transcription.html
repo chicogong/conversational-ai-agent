@@ -598,7 +598,12 @@
                 updateStatus(transcriptionStatus, '停止中...');
                 toggleBtn.disabled = true;
 
-                await apiRequest(`/conversations/${taskId}`, {}, 'DELETE');
+                // 调用停止转录API
+                await apiRequest('/stop-transcription', { 
+                    TaskId: taskId,
+                    agent: 'default'
+                });
+                
                 await exitTRTCRoom();
                 
                 isTranscribing = false;

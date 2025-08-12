@@ -484,6 +484,36 @@ app.post('/start-transcription', async (req, res) => {
   }
 });
 
+// Stop AI transcription
+app.post('/stop-transcription', async (req, res) => {
+  try {
+    const { TaskId, agent } = req.body;
+    
+    if (!TaskId) {
+      return res.status(400).json({ 
+        error: 'Missing required field: TaskId'
+      });
+    }
+    
+    const agentId = agent && agentConfig[agent] ? agent : availableAgents[0];
+    if (!agentId) {
+      throw new Error('No agent configuration available');
+    }
+    
+    const client = createClientForAgent(agentId);
+    
+    console.log('🛑 Stopping transcription:', { TaskId, agentId });
+    
+    const data = await client.StopAITranscription({ TaskId });
+    
+    console.log('✅ Transcription stopped successfully');
+    res.json(data);
+  } catch (error) {
+    console.error('❌ Transcription stop failed:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 /**
  * Start simultaneous interpretation - API forwarding only
  * POST /interpretation
