@@ -515,7 +515,47 @@ app.post('/stop-transcription', async (req, res) => {
 });
 
 /**
- * Start simultaneous interpretation - API forwarding only
+ * Start simultaneous interpretation using transcription API (v2)
+ * POST /interpretation-v2
+ */
+app.post('/interpretation-v2', async (req, res) => {
+  try {
+    const { agent, ...requestData } = req.body;
+    
+    // Validate required parameters
+    if (!requestData.SdkAppId || !requestData.RoomId) {
+      return res.status(400).json({ error: 'Missing required parameters' });
+    }
+    
+    const agentId = agent && agentConfig[agent] ? agent : availableAgents[0];
+    if (!agentId) {
+      throw new Error('No agent configuration available');
+    }
+    
+    const client = createClientForAgent(agentId);
+    
+    console.log('Starting AI Transcription with request:', JSON.stringify(requestData, null, 2));
+    
+    const result = await client.StartAITranscription(requestData);
+    console.log('AI Transcription started successfully:', JSON.stringify(result, null, 2));
+    
+    res.json({
+      TaskId: result.TaskId,
+      userInfo: {
+        sdkAppId: requestData.SdkAppId,
+        roomId: requestData.RoomId,
+        userId: requestData.TranscriptionParams?.UserId,
+        userSig: requestData.TranscriptionParams?.UserSig,
+        robotId: requestData.TranscriptionParams?.TargetUserId,
+      }
+    });
+  } catch (error) {
+    console.error('Error starting transcription:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
  * POST /interpretation
  */
 app.post('/interpretation', (req, res) => {
