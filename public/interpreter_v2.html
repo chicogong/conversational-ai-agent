@@ -498,11 +498,14 @@
         function handleTRTCMessage(event) {
             try {
                 const data = JSON.parse(new TextDecoder().decode(event.data));
+                console.log('receive message:', JSON.stringify(data, null, 2));
                 
                 if (data.type === MESSAGE_TYPES.CONVERSATION) {
                     const { sender, payload } = data;
                     const isRobot = sender.includes('ai_');
-                    addMessage(sender, payload.text, isRobot ? 'ai' : 'user', payload.roundid, payload.end);
+                    // 如果是AI消息且有translation_text字段，优先使用translation_text
+                    const displayText = isRobot && payload.translation_text ? payload.translation_text : payload.text;
+                    addMessage(sender, displayText, isRobot ? 'ai' : 'user', payload.roundid, payload.end);
                     updateSubtitles();
                 } 
                 else if (data.type === MESSAGE_TYPES.STATE_CHANGE) {
@@ -542,7 +545,7 @@
 
         // 语言配置
         const SUPPORTED_LANGUAGES = {
-            "zh": "中文（简体）", "en": "英语", "zh-yue": "中国粤语", "vi": "越南语", "ja": "日语", "ko": "韩语",
+            "16k_zh_en_caption": "16k_zh_en_caption", "en": "英语", "zh-yue": "中国粤语", "vi": "越南语", "ja": "日语", "ko": "韩语",
             "id": "印度尼西亚语", "th": "泰语", "pt": "葡萄牙语", "tr": "土耳其语", "ar": "阿拉伯语", "es": "西班牙语",
             "hi": "印地语", "fr": "法语", "ms": "马来语", "fil": "菲律宾语", "de": "德语", "it": "意大利语",
             "ru": "俄语", "sv": "瑞典语", "da": "丹麦语", "no": "挪威语"
@@ -644,7 +647,7 @@
                 targetSelect.innerHTML += `<option value="${code}">${name}</option>`;
             });
             
-            sourceSelect.value = 'zh';
+            sourceSelect.value = '16k_zh_en_caption';
             targetSelect.value = 'en';
         }
 
@@ -675,7 +678,10 @@
                         "UserId": credentials.robotId,
                         "UserSig": credentials.robotSig,
                         "TranscriptionMode": 0,
-                        "TargetUserId": credentials.userId
+                        "TargetUserId": credentials.userId,
+                        "TurnDetection": {
+                            "SemanticEagerness": "low"
+                        }
                     },
                     "RecognizeConfig": {
                         "Language": state.sourceLanguage
@@ -781,4 +787,4 @@
         });
     </script>
 </body>
-</html> 
+</html>

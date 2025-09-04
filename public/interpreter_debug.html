@@ -13,20 +13,39 @@
         }
 
         body {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px 15px;
+            margin: 0;
+            padding: 15px;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             color: #333;
         }
 
+        .main-layout {
+            display: flex;
+            gap: 15px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
         .main-container {
+            flex: 1;
+            max-width: 700px;
             background: rgba(255,255,255);
             backdrop-filter: blur(10px);
             border-radius: 20px;
             padding: 0;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .debug-panel {
+            flex: 1;
+            max-width: 600px;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
             box-shadow: 0 15px 35px rgba(0,0,0,0.12);
             border: 1px solid rgba(255,255,255,0.2);
         }
@@ -249,15 +268,11 @@
             font-size: 15px;
             border: 2px solid #e8f0ff;
             border-radius: 12px;
-            background: white;
+            background: white url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") no-repeat right 12px center / 16px;
             color: #333;
             cursor: pointer;
             transition: all 0.3s ease;
             appearance: none;
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-            background-position: right 12px center;
-            background-repeat: no-repeat;
-            background-size: 16px;
         }
 
         .language-selector select:focus {
@@ -299,16 +314,13 @@
             padding: 10px 20px;
             font-size: 14px;
             font-weight: 600;
-            border: none;
+            border: 2px solid rgba(255,255,255,0.2);
             border-radius: 35px;
             cursor: pointer;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-            border: 2px solid rgba(255,255,255,0.2);
         }
 
         .toggle-button:hover {
@@ -332,7 +344,8 @@
             box-shadow: 0 6px 20px rgba(244, 67, 54, 0.6);
         }
 
-        .toggle-button:disabled {
+        .toggle-button:disabled,
+        .toggle-button:disabled:hover {
             opacity: 0.6;
             cursor: not-allowed;
             background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
@@ -340,18 +353,126 @@
             transform: none;
         }
 
-        .toggle-button:disabled:hover {
-            transform: none;
-            box-shadow: 0 3px 10px rgba(156, 163, 175, 0.3);
-            background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
-        }
-
         .toggle-text {
             transition: all 0.3s ease;
             display: inline-block;
         }
 
+        .debug-header {
+            font-size: 18px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 20px;
+            text-align: center;
+            padding-bottom: 12px;
+            border-bottom: 2px solid rgba(103, 126, 234, 0.2);
+        }
+
+        .clear-debug {
+            background: #e53e3e;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-bottom: 15px;
+            transition: background 0.2s ease;
+        }
+
+        .clear-debug:hover {
+            background: #c53030;
+        }
+
+        .debug-content {
+             background: #1a202c;
+             border-radius: 12px;
+             padding: 15px;
+             height: calc(100vh - 200px);
+             overflow-y: auto;
+             color: white;
+             font-family: 'SF Mono', Monaco, monospace;
+         }
+
+         .debug-messages {
+             font-size: 12px;
+             line-height: 1.4;
+         }
+
+         .debug-message {
+             background: rgba(45, 55, 72, 0.8);
+             border-radius: 8px;
+             padding: 12px;
+             margin-bottom: 10px;
+             border-left: 3px solid #667eea;
+             transition: all 0.2s ease;
+         }
+
+         .debug-message:hover {
+             background: rgba(45, 55, 72, 1);
+             transform: translateX(2px);
+         }
+
+         .debug-roundid {
+             font-weight: 700;
+             color: #4fd1c7;
+             font-size: 14px;
+             margin-bottom: 8px;
+         }
+
+         .debug-text {
+             margin-top: 6px;
+             color: #e2e8f0;
+             font-weight: 500;
+         }
+
+         .debug-timestamp {
+             font-size: 10px;
+             color: #a0aec0;
+             margin-top: 6px;
+             font-weight: 400;
+         }
+
+         .debug-asr {
+             background: rgba(16, 185, 129, 0.2);
+             padding: 8px;
+             border-radius: 6px;
+             margin-bottom: 6px;
+             border-left: 2px solid #10b981;
+         }
+
+         .debug-translation {
+             background: rgba(245, 158, 11, 0.2);
+             padding: 8px;
+             border-radius: 6px;
+             border-left: 2px solid #f59e0b;
+         }
+
+         .debug-waiting {
+             background: rgba(74, 85, 104, 0.3);
+             padding: 8px;
+             border-radius: 6px;
+             color: #a0aec0;
+             font-style: italic;
+         }
+
+         .debug-label {
+             font-size: 11px;
+             font-weight: 600;
+             margin-bottom: 4px;
+         }
+
+         .debug-label.asr { color: #48bb78; }
+         .debug-label.translation { color: #ed8936; }
+
+        @media screen and (max-width: 1200px) {
+            .main-layout { flex-direction: column; }
+            .debug-panel { max-width: none; }
+            .debug-content { height: 300px; }
+        }
+
         @media screen and (max-width: 768px) {
+            .debug-messages { max-height: 200px; }
             body { padding: 10px; }
             .main-content { padding: 0 20px 25px; }
             .status-bar { flex-direction: column; gap: 15px; padding: 16px; }
@@ -368,6 +489,7 @@
             .language-selector { min-width: auto; }
             .language-selector select { padding: 12px 16px; font-size: 15px; }
             .toggle-button { min-width: 100%; padding: 12px 20px; font-size: 15px; border-radius: 35px; }
+            .debug-content { height: 250px; }
         }
     </style>
 </head>
@@ -378,56 +500,68 @@
         <input id="robot_state" type="text" readonly value="Agent未激活"/>
         <textarea id="subtitle-text-place" readonly></textarea>
     </div>
-    <div class="main-container">
-        <div class="logo-header">
-            <img src="src/agent_cards/assets/logo_rtc.png" alt="Tencent RTC Logo" />
-        </div>
-        
-        <div class="main-content">
-            <div class="status-bar">
-                <div class="status-item">
-                    <div class="status-label">连接状态</div>
-                    <div id="connection-status" class="status-value">未连接</div>
-                </div>
-                <div class="volume-container">
-                    <div class="status-label">音量</div>
-                    <div class="volume-bar-container">
-                        <div id="volume-indicator" class="volume-bar"></div>
+    <div class="main-layout">
+        <div class="main-container">
+            <div class="logo-header">
+                <img src="src/agent_cards/assets/logo_rtc.png" alt="Tencent RTC Logo" />
+            </div>
+            
+            <div class="main-content">
+                <div class="status-bar">
+                    <div class="status-item">
+                        <div class="status-label">连接状态</div>
+                        <div id="connection-status" class="status-value">未连接</div>
+                    </div>
+                    <div class="volume-container">
+                        <div class="status-label">音量</div>
+                        <div class="volume-bar-container">
+                            <div id="volume-indicator" class="volume-bar"></div>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">翻译状态</div>
+                        <div id="translation-status" class="status-value">待机中</div>
                     </div>
                 </div>
-                <div class="status-item">
-                    <div class="status-label">翻译状态</div>
-                    <div id="translation-status" class="status-value">待机中</div>
-                </div>
-            </div>
 
-            <div class="subtitles-container">
-                <div id="subtitles-display" class="subtitles-content">
-                    <div class="subtitles-placeholder">选择识别语言和输出语言，然后点击开始翻译</div>
+                <div class="subtitles-container">
+                    <div id="subtitles-display" class="subtitles-content">
+                        <div class="subtitles-placeholder">选择识别语言和输出语言，然后点击开始翻译</div>
+                    </div>
                 </div>
-            </div>
 
-            <div class="controls-container">
-                <div class="language-pair-container">
-                    <div class="language-selector">
-                        <label for="source-language">识别语言</label>
-                        <select id="source-language">
-                            <option value="">请选择识别语言</option>
-                        </select>
+                <div class="controls-container">
+                    <div class="language-pair-container">
+                        <div class="language-selector">
+                            <label for="source-language">识别语言</label>
+                            <select id="source-language">
+                                <option value="">请选择识别语言</option>
+                            </select>
+                        </div>
+                        <div class="language-selector">
+                            <label for="target-language">输出语言</label>
+                            <select id="target-language">
+                                <option value="">请选择输出语言</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="language-selector">
-                        <label for="target-language">输出语言</label>
-                        <select id="target-language">
-                            <option value="">请选择输出语言</option>
-                        </select>
-                    </div>
+                    <div class="language-error" id="language-error">识别语言和输出语言不能相同</div>
+                    <button id="translation_toggle" class="toggle-button">
+                        <span class="toggle-text">🎤 开始翻译</span>
+                    </button>
                 </div>
-                <div class="language-error" id="language-error">识别语言和输出语言不能相同</div>
-                <button id="translation_toggle" class="toggle-button">
-                    <span class="toggle-text">🎤 开始翻译</span>
-                </button>
             </div>
         </div>
+
+        <div class="debug-panel">
+             <div class="debug-header">🔍 调试信息 - RoundID 对应关系</div>
+             <button class="clear-debug" onclick="clearDebugMessages()">清空消息</button>
+             <div class="debug-content">
+                 <div id="debug-roundid-pairs" class="debug-messages">
+                     <div style="text-align: center; color: #a0aec0; padding: 20px; font-style: italic;">等待消息对应关系...</div>
+                 </div>
+             </div>
+         </div>
     </div>
 
     <div class="footer-container">
@@ -494,6 +628,16 @@
                 if (data.type === MESSAGE_TYPES.CONVERSATION) {
                     const { sender, payload } = data;
                     const isRobot = sender.includes('ai_');
+                    
+                    // 添加调试信息
+                    if (isRobot) {
+                        // AI 机器人的消息通常是翻译结果
+                        addDebugMessage('translation', payload.roundid, payload.text, sender);
+                    } else {
+                        // 用户的消息通常是 ASR 识别结果
+                        addDebugMessage('asr', payload.roundid, payload.text, sender);
+                    }
+                    
                     addMessage(sender, payload.text, isRobot ? 'ai' : 'user', payload.roundid, payload.end);
                     updateSubtitles();
                 } 
@@ -543,6 +687,97 @@
         // 应用状态
         const state = { taskId: null, sourceLanguage: '', targetLanguage: '', isActive: false, isProcessing: false };
         let lastSubtitle = '';
+        
+        // 调试信息存储
+        const debugData = {
+            asrMessages: [],
+            translationMessages: [],
+            roundIdMap: new Map() // roundid -> {asr: message, translation: message}
+        };
+        
+        // 调试信息显示函数
+        function addDebugMessage(type, roundid, text, sender) {
+            const timestamp = new Date().toLocaleTimeString();
+            const message = { roundid, text, sender, timestamp };
+            
+            // 建立 roundid 映射
+            if (!debugData.roundIdMap.has(roundid)) {
+                debugData.roundIdMap.set(roundid, { asr: null, translation: null });
+            }
+            
+            if (type === 'asr') {
+                debugData.asrMessages.push(message);
+                debugData.roundIdMap.get(roundid).asr = message;
+            } else if (type === 'translation') {
+                debugData.translationMessages.push(message);
+                debugData.roundIdMap.get(roundid).translation = message;
+            }
+            
+            updateDebugDisplay(type);
+        }
+        
+        function updateDebugDisplay(type) {
+            // 更新组合显示
+            updateRoundIdPairsDisplay();
+        }
+        
+        function updateRoundIdPairsDisplay() {
+            const container = document.getElementById('debug-roundid-pairs');
+            if (!container) return;
+            
+            if (debugData.roundIdMap.size === 0) {
+                container.innerHTML = '<div class="debug-waiting" style="text-align: center; padding: 20px;">等待消息对应关系...</div>';
+                return;
+            }
+            
+            // 按 roundid 排序并生成 HTML
+            const sortedRoundIds = Array.from(debugData.roundIdMap.keys()).sort((a, b) => {
+                const aTime = debugData.roundIdMap.get(a).asr?.timestamp || debugData.roundIdMap.get(a).translation?.timestamp;
+                const bTime = debugData.roundIdMap.get(b).asr?.timestamp || debugData.roundIdMap.get(b).translation?.timestamp;
+                return new Date('1970/01/01 ' + aTime) - new Date('1970/01/01 ' + bTime);
+            });
+            
+            const html = sortedRoundIds.slice(-10).map(roundid => {
+                 const pair = debugData.roundIdMap.get(roundid);
+                 const asrMsg = pair.asr;
+                 const translationMsg = pair.translation;
+                 
+                 return `
+                     <div class="debug-message">
+                         <div class="debug-roundid">RoundID: ${roundid}</div>
+                         ${asrMsg ? `
+                             <div class="debug-asr">
+                                 <div class="debug-label asr">📝 ASR 识别</div>
+                                 <div class="debug-text">${asrMsg.text}</div>
+                                 <div class="debug-timestamp">${asrMsg.timestamp} - ${asrMsg.sender}</div>
+                             </div>
+                         ` : '<div class="debug-waiting" style="margin-bottom: 6px;">等待 ASR 识别结果...</div>'}
+                         ${translationMsg ? `
+                             <div class="debug-translation">
+                                 <div class="debug-label translation">🌐 翻译结果</div>
+                                 <div class="debug-text">${translationMsg.text}</div>
+                                 <div class="debug-timestamp">${translationMsg.timestamp} - ${translationMsg.sender}</div>
+                             </div>
+                         ` : '<div class="debug-waiting">等待翻译结果...</div>'}
+                     </div>
+                 `;
+             }).join('');
+            
+            container.innerHTML = html;
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function clearDebugMessages() {
+            debugData.asrMessages = [];
+            debugData.translationMessages = [];
+            debugData.roundIdMap.clear();
+            
+            // 清空显示
+            const container = document.getElementById('debug-roundid-pairs');
+            if (container) {
+                container.innerHTML = '<div class="debug-waiting" style="text-align: center; padding: 20px;">等待消息对应关系...</div>';
+            }
+        }
 
         // 基础回调函数
         function addMessage(sender, text, type, roundid, end) {
@@ -652,6 +887,9 @@
             text.textContent = '连接中...';
             
             try {
+                // 清空调试信息
+                clearDebugMessages();
+                
                 state.sourceLanguage = document.getElementById('source-language').value;
                 state.targetLanguage = document.getElementById('target-language').value;
                 
@@ -666,7 +904,7 @@
                     robotId: credentials.robotId,
                     robotSig: credentials.robotSig,
                     agentConfig: { WelcomeMessage: "同传开始", InterruptMode: 0, TurnDetectionMode: 0, InterruptSpeechDuration: 4000 },
-                    sttConfig: { Language: state.sourceLanguage, VadSilenceTime: 500 },
+                    sttConfig: { Language: state.sourceLanguage, VadSilenceTime: 2000 },
                     llmConfig: { LLMType: "internal" },
                     ttsConfig: { TTSType: "internal" },
                     experimentalParams: {
@@ -773,4 +1011,4 @@
         });
     </script>
 </body>
-</html> 
+</html>
