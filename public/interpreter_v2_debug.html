@@ -13,22 +13,54 @@
         }
 
         body {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px 15px;
+            margin: 0;
+            padding: 15px;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             color: #333;
         }
 
+        .main-layout {
+            display: flex;
+            gap: 15px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
         .main-container {
+            flex: 1;
+            max-width: 700px;
             background: rgba(255,255,255);
             backdrop-filter: blur(10px);
             border-radius: 20px;
             padding: 0;
             box-shadow: 0 15px 35px rgba(0,0,0,0.12);
             border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .subtitles-panel {
+            flex: 1;
+            max-width: 600px;
+            background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.08), 0 8px 32px rgba(0,0,0,0.04);
+            border: 1px solid rgba(255,255,255,0.6);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .subtitles-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            border-radius: 24px 24px 0 0;
         }
 
         .logo-header {
@@ -129,20 +161,18 @@
             font-weight: 600;
             padding: 10px 18px;
             border-radius: 25px;
-            background: linear-gradient(135deg, #f8f9ff 0%, #e8f0ff 100%);
+            background: #f8f9ff;
             color: #667eea;
             min-width: 110px;
             text-align: center;
-            border: 2px solid rgba(103, 126, 234, 0.3);
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 2px 8px rgba(103, 126, 234, 0.15);
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
         }
 
         .status-value.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #667eea;
             color: white;
             border-color: #667eea;
-            box-shadow: 0 4px 15px rgba(103, 126, 234, 0.4);
         }
 
         .volume-container {
@@ -151,29 +181,25 @@
         }
 
         .volume-bar-container {
-            height: 14px;
-            background: rgba(248, 249, 255, 0.8);
-            border-radius: 8px;
+            height: 12px;
+            background: #f1f5f9;
+            border-radius: 6px;
             overflow: hidden;
             margin-top: 8px;
             position: relative;
-            border: 2px solid rgba(103, 126, 234, 0.2);
-            backdrop-filter: blur(5px);
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+            border: 1px solid #e2e8f0;
         }
 
         .volume-bar {
             height: 100%;
             width: 0%;
-            background: linear-gradient(90deg, #10b981 0%, #f59e0b 45%, #ef4444 85%, #dc2626 100%);
-            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            border-radius: 6px;
+            background: #10b981;
+            transition: width 0.3s ease;
+            border-radius: 4px;
             position: relative;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
 
         .volume-bar.active {
-            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
             animation: pulse 0.8s ease-in-out infinite alternate;
         }
 
@@ -183,9 +209,9 @@
         }
 
         .subtitles-container {
-            background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
-            border-radius: 16px;
-            padding: 35px;
+            background: #2d3748;
+            border-radius: 12px;
+            padding: 24px;
             margin-bottom: 25px;
             min-height: 200px;
             position: relative;
@@ -202,33 +228,31 @@
             flex-direction: column;
             justify-content: center;
             min-height: 130px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.4);
             gap: 16px;
         }
 
         .subtitle-original {
-            font-size: 18px;
-            color: #e2e8f0;
+            font-size: 16px;
+            color: #ffffff;
             font-style: italic;
-            opacity: 0.85;
-            font-weight: 400;
-            letter-spacing: 0.3px;
+            opacity: 1;
+            font-weight: 500;
+            margin-bottom: 8px;
         }
 
         .subtitle-translated {
-            font-size: 26px;
+            font-size: 18px;
             color: #ffffff;
             font-weight: 600;
             line-height: 1.4;
-            letter-spacing: 0.5px;
         }
 
         .subtitles-placeholder {
-            color: #a0aec0;
-            font-size: 18px;
+            color: #cbd5e0;
+            font-size: 16px;
             font-style: italic;
-            opacity: 0.7;
-            font-weight: 300;
+            opacity: 0.8;
+            font-weight: 400;
         }
 
         .controls-container {
@@ -301,50 +325,40 @@
             font-size: 14px;
             font-weight: 600;
             border: none;
-            border-radius: 35px;
+            border-radius: 24px;
             cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.3s ease;
             position: relative;
-            overflow: hidden;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #667eea;
             color: white;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-            border: 2px solid rgba(255,255,255,0.2);
+            border: 1px solid #667eea;
         }
 
         .toggle-button:hover {
-            transform: translateY(-2px) scale(1.01);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
-        }
-
-        .toggle-button:active {
-            transform: translateY(-1px) scale(1.01);
-            box-shadow: 0 3px 12px rgba(102, 126, 234, 0.5);
+            background: #5a67d8;
+            border-color: #5a67d8;
         }
 
         .toggle-button.active {
-            background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
-            box-shadow: 0 4px 15px rgba(244, 67, 54, 0.4);
+            background: #ef4444;
+            border-color: #ef4444;
         }
 
         .toggle-button.active:hover {
-            background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
-            box-shadow: 0 6px 20px rgba(244, 67, 54, 0.6);
+            background: #dc2626;
+            border-color: #dc2626;
         }
 
         .toggle-button:disabled {
             opacity: 0.6;
             cursor: not-allowed;
-            background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
-            box-shadow: 0 3px 10px rgba(156, 163, 175, 0.3);
-            transform: none;
+            background: #9ca3af;
+            border-color: #9ca3af;
         }
 
         .toggle-button:disabled:hover {
-            transform: none;
-            box-shadow: 0 3px 10px rgba(156, 163, 175, 0.3);
-            background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+            background: #9ca3af;
+            border-color: #9ca3af;
         }
 
         .toggle-text {
@@ -424,12 +438,13 @@
         .language-option {
             display: flex;
             align-items: center;
-            padding: 12px 15px;
+            padding: 15px 18px;
             border: 2px solid #e8f0ff;
             border-radius: 10px;
             cursor: pointer;
             transition: all 0.3s ease;
             background: white;
+            position: relative;
         }
 
         .language-option:hover {
@@ -439,19 +454,21 @@
 
         .language-option.selected {
             border-color: #667eea;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #667eea;
             color: white;
         }
 
         .language-option input[type="checkbox"] {
-            margin-right: 10px;
-            transform: scale(1.2);
+            margin-right: 12px;
+            transform: scale(1.3);
+            pointer-events: none;
         }
 
         .language-option label {
             cursor: pointer;
             font-weight: 500;
             flex: 1;
+            pointer-events: none;
         }
 
         .language-modal-actions {
@@ -461,13 +478,14 @@
         }
 
         .language-modal-btn {
-            padding: 12px 24px;
+            padding: 16px 32px;
             border: none;
-            border-radius: 25px;
+            border-radius: 12px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            min-width: 100px;
+            min-width: 120px;
+            font-size: 16px;
         }
 
         .language-modal-btn.cancel {
@@ -480,13 +498,12 @@
         }
 
         .language-modal-btn.confirm {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #667eea;
             color: white;
         }
 
         .language-modal-btn.confirm:hover {
-            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
-            transform: translateY(-1px);
+            background: #5a67d8;
         }
 
         .selected-languages-display {
@@ -504,7 +521,123 @@
             font-style: italic;
         }
 
+        .subtitles-header {
+            font-size: 18px;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 16px;
+            text-align: center;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(103, 126, 234, 0.15);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+
+
+        .subtitles-content-panel {
+            background: #f8f9ff;
+            border-radius: 12px;
+            padding: 15px;
+            height: calc(100vh - 200px);
+            overflow-y: auto;
+            color: #333;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            border: 1px solid #e8f0ff;
+        }
+
+        .subtitle-messages {
+            font-size: 13px;
+            line-height: 1.5;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .subtitle-message {
+            background: white;
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px solid #e8f0ff;
+            margin-bottom: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .subtitle-message:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .subtitle-language {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 14px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        .subtitle-content {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .subtitle-row {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .subtitle-original {
+            flex: 1;
+            background: rgba(16, 185, 129, 0.15);
+            padding: 8px 12px;
+            border-radius: 6px;
+            border-left: 3px solid #10b981;
+            color: #1f2937;
+            font-weight: 500;
+        }
+
+        .subtitle-translated {
+            flex: 1;
+            background: rgba(245, 158, 11, 0.15);
+            padding: 8px 12px;
+            border-radius: 6px;
+            border-left: 3px solid #f59e0b;
+            color: #1f2937;
+            font-weight: 500;
+        }
+
+        .subtitle-timestamp {
+            font-size: 10px;
+            color: #a0aec0;
+            margin-top: 6px;
+            font-weight: 400;
+        }
+
+        .subtitle-label {
+            font-size: 14px;
+            margin-right: 6px;
+            display: inline;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .language-flag {
+            font-size: 18px;
+        }
+
+        @media screen and (max-width: 1200px) {
+            .main-layout { flex-direction: column; }
+            .subtitles-panel { max-width: none; }
+            .subtitles-content-panel { height: 300px; }
+        }
+
         @media screen and (max-width: 768px) {
+            .subtitle-messages { max-height: 200px; }
             body { padding: 10px; }
             .main-content { padding: 0 20px 25px; }
             .status-bar { flex-direction: column; gap: 15px; padding: 16px; }
@@ -521,6 +654,7 @@
             .language-selector { min-width: auto; }
             .language-selector select { padding: 12px 16px; font-size: 15px; }
             .toggle-button { min-width: 100%; padding: 12px 20px; font-size: 15px; border-radius: 35px; }
+            .subtitles-content-panel { height: 250px; }
         }
     </style>
 </head>
@@ -531,10 +665,11 @@
         <input id="robot_state" type="text" readonly value="Agent未激活"/>
         <textarea id="subtitle-text-place" readonly></textarea>
     </div>
-    <div class="main-container">
-        <div class="logo-header">
-            <img src="src/agent_cards/assets/logo_rtc.png" alt="Tencent RTC Logo" />
-        </div>
+    <div class="main-layout">
+        <div class="main-container">
+            <div class="logo-header">
+                <img src="src/agent_cards/assets/logo_rtc.png" alt="Tencent RTC Logo" />
+            </div>
         
         <div class="main-content">
             <div class="status-bar">
@@ -589,6 +724,17 @@
                 <button id="translation_toggle" class="toggle-button">
                     <span class="toggle-text">🎤 开始翻译</span>
                 </button>
+            </div>
+        </div>
+    </div>
+
+        <div class="subtitles-panel">
+            <div class="subtitles-header">📝 多语言字幕展示</div>
+            
+            <div class="subtitles-content-panel">
+                <div id="subtitle-display-messages" class="subtitle-messages">
+                    <div style="text-align: center; color: #a0aec0; padding: 20px; font-style: italic;">等待字幕内容...</div>
+                </div>
             </div>
         </div>
     </div>
@@ -728,6 +874,16 @@
         const state = { taskId: null, sourceLanguage: '', targetLanguages: [], isActive: false, isProcessing: false };
         let lastSubtitle = '';
         let selectedLanguages = new Set();
+        let subtitleMessages = [];
+
+        // 语言标志映射
+        const LANGUAGE_FLAGS = {
+            'en': '🇺🇸', 'zh': '🇨🇳', 'zh-yue': '🇭🇰', 'ja': '🇯🇵', 'ko': '🇰🇷',
+            'vi': '🇻🇳', 'id': '🇮🇩', 'th': '🇹🇭', 'pt': '🇵🇹', 'tr': '🇹🇷',
+            'ar': '🇸🇦', 'es': '🇪🇸', 'hi': '🇮🇳', 'fr': '🇫🇷', 'ms': '🇲🇾',
+            'fil': '🇵🇭', 'de': '🇩🇪', 'it': '🇮🇹', 'ru': '🇷🇺', 'sv': '🇸🇪',
+            'da': '🇩🇰', 'no': '🇳🇴'
+        };
 
         // 基础回调函数
         function addMessage(sender, text, type, roundid, end, translationLang = null) {
@@ -736,6 +892,145 @@
                 const langInfo = translationLang ? `[${translationLang}]` : '';
                 element.value += `\n${sender}: ${text}${langInfo}`;
             }
+            
+            // 添加到字幕面板
+            addSubtitleMessage(sender, text, type, roundid, translationLang);
+        }
+
+        function addSubtitleMessage(sender, text, type, roundid, translationLang = null) {
+            const timestamp = new Date().toLocaleTimeString();
+            const isRobot = type === 'ai';
+            
+            if (isRobot && translationLang) {
+                // AI翻译消息
+                const message = {
+                    id: Date.now() + Math.random(),
+                    timestamp,
+                    language: translationLang,
+                    translatedText: text,
+                    roundid
+                };
+                subtitleMessages.push(message);
+            } else if (!isRobot) {
+                // 用户原始消息
+                const message = {
+                    id: Date.now() + Math.random(),
+                    timestamp,
+                    language: state.sourceLanguage,
+                    originalText: text,
+                    roundid
+                };
+                subtitleMessages.push(message);
+            }
+            
+            updateSubtitleDisplay();
+        }
+
+        function updateSubtitleDisplay() {
+            const container = document.getElementById('subtitle-display-messages');
+            if (!container) return;
+            
+            if (subtitleMessages.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #718096; padding: 32px; font-style: italic; font-size: 16px;">✨ 等待字幕内容...</div>';
+                return;
+            }
+            
+            // 按roundid分组并生成HTML
+            const groups = groupMessagesByRound();
+            const html = Object.keys(groups).reverse().map(roundid => 
+                createSubtitleHTML(roundid, groups[roundid])
+            ).join('');
+            
+            container.innerHTML = html;
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function groupMessagesByRound() {
+            const groups = {};
+            subtitleMessages.forEach(msg => {
+                if (!groups[msg.roundid]) {
+                    groups[msg.roundid] = { original: null, translations: {} };
+                }
+                if (msg.originalText) {
+                    groups[msg.roundid].original = msg;
+                } else if (msg.translatedText) {
+                    // 同轮同语言覆盖显示
+                    groups[msg.roundid].translations[msg.language] = msg;
+                }
+            });
+            return groups;
+        }
+        
+        function createSubtitleHTML(roundid, group) {
+            const translationArray = Object.values(group.translations);
+            if (!group.original && translationArray.length === 0) return '';
+            
+            const timestamp = group.original?.timestamp || translationArray[0]?.timestamp || '';
+            const header = `
+                <div class="subtitle-language">
+                    <span>💬 第 ${roundid} 轮对话</span>
+                    <span style="margin-left: auto; opacity: 0.7;">${timestamp}</span>
+                </div>
+            `;
+            
+            let content = '';
+            if (group.original && translationArray.length > 0) {
+                content = createParallelContent(group.original, translationArray[0]);
+                content += translationArray.slice(1).map(trans => 
+                    createTranslationContent(trans)
+                ).join('');
+            } else if (group.original) {
+                content = createOriginalContent(group.original);
+            } else {
+                content = translationArray.map(trans => 
+                    createTranslationContent(trans)
+                ).join('');
+            }
+            
+            return `<div class="subtitle-message">${header}<div class="subtitle-content">${content}</div></div>`;
+        }
+        
+        function createParallelContent(original, translation) {
+            const transLang = SUPPORTED_LANGUAGES[translation.language] || translation.language;
+            const transFlag = LANGUAGE_FLAGS[translation.language] || '🌐';
+            
+            return `
+                <div class="subtitle-row">
+                    <div class="subtitle-original">
+                        ${original.originalText}
+                    </div>
+                    <div class="subtitle-translated">
+                        ${transFlag} ${transLang}：${translation.translatedText}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function createOriginalContent(original) {
+            const flag = LANGUAGE_FLAGS[original.language] || '🌐';
+            return `
+                <div class="subtitle-row">
+                    <div class="subtitle-original">
+                        <span class="subtitle-label">${flag}</span> ${original.originalText}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function createTranslationContent(translation) {
+            const flag = LANGUAGE_FLAGS[translation.language] || '🌐';
+            return `
+                <div class="subtitle-row">
+                    <div class="subtitle-translated">
+                        <span class="subtitle-label">${flag}</span> ${translation.translatedText}
+                    </div>
+                </div>
+            `;
+        }
+
+        function clearSubtitleMessages() {
+            subtitleMessages = [];
+            updateSubtitleDisplay();
         }
 
         function updateStatus(target, status) {
@@ -942,6 +1237,9 @@
         async function startTranslation() {
             if (state.isProcessing || !validateLanguageSelection()) return;
             
+            // 清空字幕面板
+            clearSubtitleMessages();
+            
             state.isProcessing = true;
             const button = document.getElementById('translation_toggle');
             const text = button.querySelector('.toggle-text');
@@ -970,7 +1268,8 @@
                         }
                     },
                     "RecognizeConfig": {
-                        "Language": state.sourceLanguage
+                        "Language": state.sourceLanguage,
+                        "AlternativeLanguage": []
                     },
                     "TranslationConfig": {
                         "Mode": translationMode,
@@ -1067,6 +1366,12 @@
             document.getElementById('translation_toggle').addEventListener('click', function() {
                 state.isActive ? stopTranslation() : startTranslation();
             });
+            
+            // 添加清空字幕按钮事件监听器
+            document.getElementById('clear-subtitles-btn').addEventListener('click', clearSubtitleMessages);
+            
+            // 初始化字幕显示
+            updateSubtitleDisplay();
 
             updateUI();
             updateSubtitles();
