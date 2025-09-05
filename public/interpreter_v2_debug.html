@@ -231,7 +231,7 @@
             gap: 16px;
         }
 
-        .subtitle-original {
+        .subtitles-container .subtitle-original {
             font-size: 16px;
             color: #75f175 !important;
             font-style: italic;
@@ -240,7 +240,7 @@
             margin-bottom: 8px;
         }
 
-        .subtitle-translated {
+        .subtitles-container .subtitle-translated {
             font-size: 18px;
             color: #7ae6e6 !important;
             font-weight: 600;
@@ -585,7 +585,7 @@
             line-height: 1.4;
         }
 
-        .subtitle-original {
+        .subtitles-content-panel .subtitle-original {
             flex: 1;
             background: rgba(16, 185, 129, 0.15);
             padding: 8px 12px;
@@ -595,7 +595,7 @@
             font-weight: 500;
         }
 
-        .subtitle-translated {
+        .subtitles-content-panel .subtitle-translated {
             flex: 1;
             background: rgba(245, 158, 11, 0.15);
             padding: 8px 12px;
@@ -871,10 +871,8 @@
             "en": "英语",
             "zh": "中文",
             "ja": "日语",
-            "zh": "中文", 
             "zh-yue": "中国粤语",
             "vi": "越南语",
-            "ja": "日语",
             "ko": "韩语",
             "id": "印度尼西亚语",
             "th": "泰语",
@@ -1416,9 +1414,6 @@
             document.getElementById('translation_toggle').addEventListener('click', function() {
                 state.isActive ? stopTranslation() : startTranslation();
             });
-            
-            // 添加清空字幕按钮事件监听器
-            document.getElementById('clear-subtitles-btn').addEventListener('click', clearSubtitleMessages);
             
             // 初始化字幕显示
             updateSubtitleDisplay();
