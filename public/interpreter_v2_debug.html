@@ -233,16 +233,16 @@
 
         .subtitle-original {
             font-size: 16px;
-            color: #ffffff;
+            color: #75f175 !important;
             font-style: italic;
             opacity: 1;
-            font-weight: 500;
+            font-weight: 600;
             margin-bottom: 8px;
         }
 
         .subtitle-translated {
             font-size: 18px;
-            color: #ffffff;
+            color: #7ae6e6 !important;
             font-weight: 600;
             line-height: 1.4;
         }
@@ -391,7 +391,7 @@
             padding: 30px;
             max-width: 500px;
             width: 90%;
-            max-height: 80vh;
+            max-height: 90vh;
             overflow-y: auto;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
             position: relative;
@@ -433,6 +433,9 @@
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 10px;
             margin-bottom: 25px;
+            max-height: 60vh;
+            overflow-y: auto;
+            padding-right: 5px;
         }
 
         .language-option {
@@ -506,19 +509,9 @@
             background: #5a67d8;
         }
 
-        .selected-languages-display {
-            margin-top: 10px;
-            padding: 10px 15px;
-            background: #f8f9ff;
-            border-radius: 10px;
-            border: 1px solid #e8f0ff;
-            font-size: 14px;
-            color: #667eea;
-        }
-
         .selected-languages-display.empty {
-            color: #999;
             font-style: italic;
+            opacity: 0.7;
         }
 
         .subtitles-header {
@@ -705,6 +698,13 @@
                         </select>
                     </div>
                     <div class="language-selector">
+                        <label for="voice-type">音色选择</label>
+                        <select id="voice-type">
+                            <option value="Chinese (Mandarin)_IntellectualGirl">知性女声</option>
+                            <option value="kefu-herui3">客服女声</option>
+                        </select>
+                    </div>
+                    <div class="language-selector">
                         <label for="source-language">识别语言</label>
                         <select id="source-language">
                             <option value="">请选择识别语言</option>
@@ -712,12 +712,11 @@
                     </div>
                     <div class="language-selector">
                         <label for="target-languages">输出语言</label>
-                        <button id="target-languages-btn" class="language-modal-btn confirm" style="width: 100%; text-align: left; padding: 12px 16px; border-radius: 8px; font-size: 14px;">
-                            选择目标语言
+                        <button id="target-languages-btn" class="language-modal-btn confirm" style="width: 100%; text-align: left; padding: 8px 12px; border-radius: 8px; font-size: 14px; position: relative;">
+                            <span id="selected-languages-display" class="selected-languages-display empty" style="margin: 0; padding: 0; background: none; border: none; font-size: inherit; color: inherit; line-height: inherit; font-style: normal;">
+                                选择目标语言
+                            </span>
                         </button>
-                        <div id="selected-languages-display" class="selected-languages-display empty">
-                            未选择任何语言
-                        </div>
                     </div>
                 </div>
                 <div class="language-error" id="language-error">识别语言和输出语言不能相同</div>
@@ -1275,7 +1274,7 @@
                         "Mode": translationMode,
                         "TargetLanguages": state.targetLanguages,
                         "TTSConfig": {
-                            "VoiceId": "Chinese (Mandarin)_IntellectualGirl"
+                            "VoiceId": document.getElementById('voice-type').value || "Chinese (Mandarin)_IntellectualGirl"
                         }
                     }
                 };
