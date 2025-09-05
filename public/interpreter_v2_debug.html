@@ -742,11 +742,7 @@
                     </div>
                     <div class="language-selector">
                         <label for="target-languages">输出语言</label>
-                        <button id="target-languages-btn" class="language-modal-btn confirm" style="width: 100%; text-align: left; padding: 8px 12px; border-radius: 8px; font-size: 14px; position: relative;">
-                            <span id="selected-languages-display" class="selected-languages-display empty" style="margin: 0; padding: 0; background: none; border: none; font-size: inherit; color: inherit; line-height: inherit; font-style: normal;">
-                                选择目标语言
-                            </span>
-                        </button>
+                        <input id="target-languages-btn" type="text" readonly placeholder="选择目标语言" style="width: 100%; padding: 12px 18px; border: 2px solid #e8f0ff; border-radius: 12px; background: white; color: #333; cursor: pointer; background-image: url('data:image/svg+xml,%3csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3e%3cpath stroke=\'%236b7280\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M6 8l4 4 4-4\'/%3e%3c/svg%3e'); background-position: right 12px center; background-repeat: no-repeat; background-size: 16px;">
                     </div>
                 </div>
                 <div class="language-error" id="language-error">识别语言和输出语言不能相同</div>
@@ -1308,14 +1304,14 @@
          }
 
         function updateSelectedLanguagesDisplay() {
-            const display = document.getElementById('selected-languages-display');
+            const display = document.getElementById('target-languages-btn');
             if (selectedLanguages.size === 0) {
-                display.textContent = '未选择任何语言';
-                display.classList.add('empty');
+                display.value = '选择目标语言';
+                display.style.color = '#9ca3af';
             } else {
                 const languageNames = Array.from(selectedLanguages).map(code => TRANSLATION_LANGUAGES[code] || code);
-                display.textContent = `已选择: ${languageNames.join(', ')}`;
-                display.classList.remove('empty');
+                display.value = `已选择: ${languageNames.join(', ')}`;
+                display.style.color = '#333';
             }
         }
 
