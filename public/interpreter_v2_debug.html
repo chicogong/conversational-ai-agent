@@ -711,7 +711,8 @@
                     <div class="language-selector">
                         <label for="semantic-eagerness">语义断句等级</label>
                         <select id="semantic-eagerness">
-                            <option value="low" selected>low</option>
+                            <option value="off" selected>关闭</option>
+                            <option value="low">low</option>
                             <option value="medium">medium</option>
                             <option value="high">high</option>
                             <option value="auto">auto</option>
@@ -1343,20 +1344,26 @@
                 const vadLevelRaw = document.getElementById('vad-level')?.value;
                 const vadLevelParsed = parseInt(vadLevelRaw, 10);
                 const vadLevel = isNaN(vadLevelParsed) ? 2 : Math.min(3, Math.max(0, vadLevelParsed));
-                const semanticLevel = (document.getElementById('semantic-eagerness')?.value || 'low');
+                const semanticLevel = (document.getElementById('semantic-eagerness')?.value || 'off');
+
+                const transcriptionParams = {
+                    "UserId": credentials.robotId,
+                    "UserSig": credentials.robotSig,
+                    "TranscriptionMode": 0,
+                    "TargetUserId": credentials.userId
+                };
+
+                // 只有当语义断句不是"关闭"时才添加TurnDetection
+                if (semanticLevel !== 'off') {
+                    transcriptionParams.TurnDetection = {
+                        "SemanticEagerness": semanticLevel
+                    };
+                }
 
                 const requestBody = {
                     "SdkAppId": credentials.sdkAppId,
                     "RoomId": roomId.toString(),
-                    "TranscriptionParams": {
-                        "UserId": credentials.robotId,
-                        "UserSig": credentials.robotSig,
-                        "TranscriptionMode": 0,
-                        "TargetUserId": credentials.userId,
-                        "TurnDetection": {
-                            "SemanticEagerness": semanticLevel
-                        }
-                    },
+                    "TranscriptionParams": transcriptionParams,
                     "RecognizeConfig": {
                         "Language": state.sourceLanguage,
                         "AlternativeLanguage": [],
