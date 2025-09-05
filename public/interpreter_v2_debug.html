@@ -701,7 +701,7 @@
                         <label for="voice-type">音色选择</label>
                         <select id="voice-type">
                             <option value="Chinese (Mandarin)_IntellectualGirl">知性女声</option>
-                            <option value="kefu-herui3">客服女声</option>
+                            <option value="kefu-herui3">女声小睿</option>
                         </select>
                     </div>
                     <div class="language-selector">
@@ -861,13 +861,60 @@
             }
         }
 
-        // 语言配置
-        const SUPPORTED_LANGUAGES = {
-            "16k_zh_en_caption": "16k_zh_en_caption", "en": "英语", "zh-yue": "中国粤语", "vi": "越南语", "ja": "日语", "ko": "韩语",
-            "id": "印度尼西亚语", "th": "泰语", "pt": "葡萄牙语", "tr": "土耳其语", "ar": "阿拉伯语", "es": "西班牙语",
-            "hi": "印地语", "fr": "法语", "ms": "马来语", "fil": "菲律宾语", "de": "德语", "it": "意大利语",
-            "ru": "俄语", "sv": "瑞典语", "da": "丹麦语", "no": "挪威语"
+        // 识别语言配置
+        const RECOGNITION_LANGUAGES = {
+            "16k_zh_en_caption": "中英caption",
+            "en": "英语",
+            "zh": "中文",
+            "ja": "日语",
+            "zh": "中文", 
+            "zh-yue": "中国粤语",
+            "vi": "越南语",
+            "ja": "日语",
+            "ko": "韩语",
+            "id": "印度尼西亚语",
+            "th": "泰语",
+            "pt": "葡萄牙语",
+            "tr": "土耳其语",
+            "ar": "阿拉伯语",
+            "es": "西班牙语",
+            "hi": "印地语",
+            "fr": "法语",
+            "ms": "马来语",
+            "fil": "菲律宾语",
+            "de": "德语",
+            "it": "意大利语",
+            "ru": "俄语",
+            "sv": "瑞典语",
+            "da": "丹麦语",
+            "no": "挪威语"
         };
+
+        // 翻译输出语言配置
+        const TRANSLATION_LANGUAGES = {
+            "en": "英语",
+            "zh": "中文", 
+            "vi": "越南语",
+            "ja": "日语",
+            "ko": "韩语",
+            "id": "印度尼西亚语",
+            "th": "泰语",
+            "pt": "葡萄牙语",
+            "tr": "土耳其语",
+            "ar": "阿拉伯语",
+            "es": "西班牙语",
+            "hi": "印地语",
+            "fr": "法语",
+            "ms": "马来语",
+            "fil": "菲律宾语",
+            "de": "德语",
+            "it": "意大利语",
+            "ru": "俄语",
+            "sv": "瑞典语",
+            "da": "丹麦语",
+            "no": "挪威语"
+        };
+
 
         // 应用状态
         const state = { taskId: null, sourceLanguage: '', targetLanguages: [], isActive: false, isProcessing: false };
@@ -877,7 +924,7 @@
 
         // 语言标志映射
         const LANGUAGE_FLAGS = {
-            'en': '🇺🇸', 'zh': '🇨🇳', 'zh-yue': '🇭🇰', 'ja': '🇯🇵', 'ko': '🇰🇷',
+            'en': '🇺🇸', 'zh': '🇨🇳', 'zh-yue': '🇨🇳', 'ja': '🇯🇵', 'ko': '🇰🇷',
             'vi': '🇻🇳', 'id': '🇮🇩', 'th': '🇹🇭', 'pt': '🇵🇹', 'tr': '🇹🇷',
             'ar': '🇸🇦', 'es': '🇪🇸', 'hi': '🇮🇳', 'fr': '🇫🇷', 'ms': '🇲🇾',
             'fil': '🇵🇭', 'de': '🇩🇪', 'it': '🇮🇹', 'ru': '🇷🇺', 'sv': '🇸🇪',
@@ -990,7 +1037,7 @@
         }
         
         function createParallelContent(original, translation) {
-            const transLang = SUPPORTED_LANGUAGES[translation.language] || translation.language;
+            const transLang = TRANSLATION_LANGUAGES[translation.language] || translation.language;
             const transFlag = LANGUAGE_FLAGS[translation.language] || '🌐';
             
             return `
@@ -1124,7 +1171,8 @@
             
             sourceSelect.innerHTML = '<option value="">请选择识别语言</option>';
             
-            Object.entries(SUPPORTED_LANGUAGES).forEach(([code, name]) => {
+            // 使用识别语言列表填充源语言选择器
+            Object.entries(RECOGNITION_LANGUAGES).forEach(([code, name]) => {
                 sourceSelect.innerHTML += `<option value="${code}">${name}</option>`;
             });
             
@@ -1139,9 +1187,8 @@
             const languageGrid = document.getElementById('language-grid');
             languageGrid.innerHTML = '';
             
-            Object.entries(SUPPORTED_LANGUAGES).forEach(([code, name]) => {
-                if (code === '16k_zh_en_caption') return; // 跳过识别语言选项
-                
+            // 使用翻译语言列表填充目标语言选择弹窗
+            Object.entries(TRANSLATION_LANGUAGES).forEach(([code, name]) => {
                 const option = document.createElement('div');
                 option.className = 'language-option';
                 option.innerHTML = `
@@ -1226,7 +1273,7 @@
                 display.textContent = '未选择任何语言';
                 display.classList.add('empty');
             } else {
-                const languageNames = Array.from(selectedLanguages).map(code => SUPPORTED_LANGUAGES[code]);
+                const languageNames = Array.from(selectedLanguages).map(code => TRANSLATION_LANGUAGES[code] || code);
                 display.textContent = `已选择: ${languageNames.join(', ')}`;
                 display.classList.remove('empty');
             }
