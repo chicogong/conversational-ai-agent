@@ -709,10 +709,36 @@
                         </select>
                     </div>
                     <div class="language-selector">
+                        <label for="semantic-eagerness">语义断句等级</label>
+                        <select id="semantic-eagerness">
+                            <option value="low" selected>low</option>
+                            <option value="medium">medium</option>
+                            <option value="high">high</option>
+                            <option value="auto">auto</option>
+                        </select>
+                    </div>
+                    <div class="language-selector">
                         <label for="source-language">识别语言</label>
                         <select id="source-language">
                             <option value="">请选择识别语言</option>
                         </select>
+                    </div>
+                    <div class="language-selector">
+                        <label for="vad-silence-time">VAD 静默阈值(ms)</label>
+                        <input id="vad-silence-time" type="number" min="240" max="2000" value="1000" style="width: 100%; padding: 12px 18px; border: 2px solid #e8f0ff; border-radius: 12px;">
+                    </div>
+                    <div class="language-selector">
+                        <label for="vad-level">VAD 远场人声抑制等级 (0-3)</label>
+                        <select id="vad-level">
+                            <option value="0">0（关闭）</option>
+                            <option value="1">1</option>
+                            <option value="2" selected>2（推荐）</option>
+                            <option value="3">3（最强）</option>
+                        </select>
+                    </div>
+                    <div class="language-selector">
+                        <label for="hotword-list">热词表（逗号分隔，格式：词|权重）</label>
+                        <input id="hotword-list" type="text" placeholder="同声传译|10,实时|5,TRTC|11" style="width: 100%; padding: 12px 18px; border: 2px solid #e8f0ff; border-radius: 12px;">
                     </div>
                     <div class="language-selector">
                         <label for="target-languages">输出语言</label>
@@ -773,6 +799,7 @@
         // 基础配置
         const API_BASE_URL = window.location.origin;
         const MESSAGE_TYPES = { CONVERSATION: 10000, STATE_CHANGE: 10001, ERROR_CALLBACK: 10030, METRICS_CALLBACK: 10020 };
+        const MAX_TARGET_LANGUAGES = 5;
         
         // TRTC 状态
         const trtcState = { client: null, currentUserId: null, botUserId: null };
@@ -1157,12 +1184,13 @@
             const errorDiv = document.getElementById('language-error');
             const toggleButton = document.getElementById('translation_toggle');
             
-            const hasTargetLanguages = state.targetLanguages && state.targetLanguages.length > 0;
+            const hasTargetLanguages = state.targetLanguages && state.targetLanguages.length > 0 && state.targetLanguages.length <= MAX_TARGET_LANGUAGES;
             const sourceInTargets = state.targetLanguages && state.targetLanguages.includes(sourceLanguage);
             
-            const isValid = sourceLanguage && hasTargetLanguages && !sourceInTargets;
-            errorDiv.style.display = sourceInTargets ? 'block' : 'none';
-            errorDiv.textContent = sourceInTargets ? '识别语言不能包含在输出语言中' : '识别语言和输出语言不能相同';
+            const overLimit = state.targetLanguages && state.targetLanguages.length > MAX_TARGET_LANGUAGES;
+            const isValid = sourceLanguage && hasTargetLanguages && !sourceInTargets && !overLimit;
+            errorDiv.style.display = (sourceInTargets || overLimit) ? 'block' : 'none';
+            errorDiv.textContent = sourceInTargets ? '识别语言不能包含在输出语言中' : (overLimit ? `输出语言最多选择 ${MAX_TARGET_LANGUAGES} 个` : '识别语言和输出语言不能相同');
             
             toggleButton.disabled = !isValid;
             return isValid;
@@ -1201,12 +1229,18 @@
                 const checkbox = option.querySelector('input');
                 checkbox.addEventListener('change', function() {
                     if (this.checked) {
+                        if (selectedLanguages.size >= MAX_TARGET_LANGUAGES) {
+                            this.checked = false;
+                            alert(`最多选择 ${MAX_TARGET_LANGUAGES} 个语言`);
+                            return;
+                        }
                         selectedLanguages.add(code);
                         option.classList.add('selected');
                     } else {
                         selectedLanguages.delete(code);
                         option.classList.remove('selected');
                     }
+                    updateSelectedLanguagesDisplay();
                 });
                 
                 option.addEventListener('click', function(e) {
@@ -1256,7 +1290,11 @@
         });
 
         function confirmLanguageSelection() {
-             state.targetLanguages = Array.from(selectedLanguages);
+             if (selectedLanguages.size > MAX_TARGET_LANGUAGES) {
+                 alert(`最多选择 ${MAX_TARGET_LANGUAGES} 个语言`);
+                 return;
+             }
+             state.targetLanguages = Array.from(selectedLanguages).slice(0, MAX_TARGET_LANGUAGES);
              updateSelectedLanguagesDisplay();
              closeLanguageModal();
              validateLanguageSelection();
@@ -1302,7 +1340,15 @@
                 const roomId = Math.floor(Math.random() * 10000000) + 1000000;
                 
                 const translationMode = parseInt(document.getElementById('translation-mode').value);
-                
+                const hotwordInput = (document.getElementById('hotword-list')?.value || '').trim();
+                const vadInputRaw = document.getElementById('vad-silence-time')?.value;
+                const vadInput = parseInt(vadInputRaw, 10);
+                const vadSilenceTime = isNaN(vadInput) ? 1000 : Math.min(2000, Math.max(240, vadInput));
+                const vadLevelRaw = document.getElementById('vad-level')?.value;
+                const vadLevelParsed = parseInt(vadLevelRaw, 10);
+                const vadLevel = isNaN(vadLevelParsed) ? 2 : Math.min(3, Math.max(0, vadLevelParsed));
+                const semanticLevel = (document.getElementById('semantic-eagerness')?.value || 'low');
+
                 const requestBody = {
                     "SdkAppId": credentials.sdkAppId,
                     "RoomId": roomId.toString(),
@@ -1312,12 +1358,15 @@
                         "TranscriptionMode": 0,
                         "TargetUserId": credentials.userId,
                         "TurnDetection": {
-                            "SemanticEagerness": "low"
+                            "SemanticEagerness": semanticLevel
                         }
                     },
                     "RecognizeConfig": {
                         "Language": state.sourceLanguage,
-                        "AlternativeLanguage": []
+                        "AlternativeLanguage": [],
+                        "HotWordList": hotwordInput,
+                        "VadSilenceTime": vadSilenceTime,
+                        "VadLevel": vadLevel
                     },
                     "TranslationConfig": {
                         "Mode": translationMode,
