@@ -52,6 +52,81 @@
             overflow: hidden;
         }
 
+        /* 视频容器样式 */
+        .video-container {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .video-item {
+            position: relative;
+            width: 300px;
+            height: 225px;
+            background: #2d3748;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid rgba(103, 126, 234, 0.3);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .video-label {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 10;
+        }
+
+        #local-video, #remote-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .video-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .video-btn {
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #667eea;
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .video-btn:hover {
+            background: #5a67d8;
+        }
+
+        .video-btn.active {
+            background: #ef4444;
+        }
+
+        .video-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background: #9ca3af;
+        }
+
         .subtitles-panel::before {
             content: '';
             position: absolute;
@@ -253,6 +328,45 @@
             font-style: italic;
             opacity: 0.8;
             font-weight: 400;
+        }
+
+        /* 用户加入/离开通知样式 */
+        .notification-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            z-index: 1000;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+            max-width: 300px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .notification-toast.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .notification-toast.leave {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .notification-icon {
+            font-size: 20px;
+        }
+
+        .notification-message {
+            flex: 1;
+            font-size: 14px;
+            font-weight: 500;
         }
 
         .controls-container {
@@ -682,6 +796,30 @@
                 </div>
             </div>
 
+            <!-- 视频显示区域 -->
+            <div class="video-container" id="video-container" style="display: none;">
+                <div class="video-item">
+                    <div class="video-label">本地画面</div>
+                    <div id="local-video"></div>
+                </div>
+                <div class="video-item">
+                    <div class="video-label">远端画面</div>
+                    <div id="remote-video"></div>
+                </div>
+            </div>
+
+            <!-- 视频控制按钮 -->
+            <div class="video-controls">
+                <button id="camera-toggle" class="video-btn" onclick="toggleCamera()">
+                    <span>📹</span>
+                    <span>开启摄像头</span>
+                </button>
+                <button id="video-toggle" class="video-btn" onclick="toggleVideoView()" style="display: none;">
+                    <span>👁</span>
+                    <span>隐藏视频</span>
+                </button>
+            </div>
+
             <div class="subtitles-container">
                 <div id="subtitles-display" class="subtitles-content">
                     <div class="subtitles-placeholder">选择识别语言和输出语言，然后点击开始翻译</div>
@@ -801,16 +939,40 @@
     <script src='https://web.sdk.qcloud.com/trtc/webrtc/v5/dist/trtc.js'></script>
     
     <script>
-        // 基础配置
+        // ========================================
+        // 1. 配置和常量定义
+        // ========================================
         const API_BASE_URL = window.location.origin;
-        const MESSAGE_TYPES = { CONVERSATION: 10000, STATE_CHANGE: 10001, ERROR_CALLBACK: 10030, METRICS_CALLBACK: 10020 };
         const MAX_TARGET_LANGUAGES = 5;
-        
-        // TRTC 状态
-        const trtcState = { client: null, currentUserId: null, botUserId: null };
+
+        // TRTC消息类型
+        const MESSAGE_TYPES = {
+            CONVERSATION: 10000,
+            STATE_CHANGE: 10001,
+            ERROR_CALLBACK: 10030,
+            METRICS_CALLBACK: 10020
+        };
+
+        // ========================================
+        // 2. 全局状态管理
+        // ========================================
+        // TRTC相关状态
+        const trtcState = {
+            client: null,
+            currentUserId: null,
+            botUserId: null,
+            isVideoEnabled: false,
+            isVideoViewVisible: false,
+            userCount: 1,  // 包括自己
+            remoteUsers: new Set()  // 追踪远端用户
+        };
+
+        // 音量相关
         let prevVolume = 0;
 
-        // API 请求
+        // ========================================
+        // 3. API通信模块
+        // ========================================
         async function apiRequest(endpoint, data, method = "POST") {
             const response = await fetch(`${API_BASE_URL}${endpoint}`, {
                 method: method,
@@ -821,7 +983,9 @@
             return await response.json();
         }
 
-        // TRTC 房间管理
+        // ========================================
+        // 4. TRTC核心功能
+        // ========================================
         async function enterTRTCRoom(params) {
             const client = trtcState.client = TRTC.create();
             await client.enterRoom({
@@ -831,9 +995,13 @@
                 userId: params.userId,
                 userSig: params.userSig,
             });
-            
+
             client.on(TRTC.EVENT.CUSTOM_MESSAGE, handleTRTCMessage);
             client.on(TRTC.EVENT.AUDIO_VOLUME, handleAudioVolume);
+            client.on(TRTC.EVENT.REMOTE_VIDEO_AVAILABLE, handleRemoteVideo);
+            client.on(TRTC.EVENT.REMOTE_VIDEO_UNAVAILABLE, handleRemoteVideoUnavailable);
+            client.on(TRTC.EVENT.REMOTE_USER_ENTER, handleUserEnter);
+            client.on(TRTC.EVENT.REMOTE_USER_LEAVE, handleUserLeave);
             client.enableAudioVolumeEvaluation(50);
             await client.startLocalAudio();
             return client;
@@ -841,13 +1009,24 @@
 
         async function exitTRTCRoom() {
             if (trtcState.client) {
+                // 停止视频（如果已开启）
+                if (trtcState.isVideoEnabled) {
+                    await trtcState.client.stopLocalVideo();
+                }
                 await trtcState.client.exitRoom();
                 trtcState.client.destroy();
                 trtcState.client = null;
+
+                // 重置用户计数
+                trtcState.userCount = 1;
+                trtcState.remoteUsers.clear();
             }
         }
 
-        // 消息处理
+        // ========================================
+        // 5. TRTC事件处理
+        // ========================================
+        // 处理自定义消息
         function handleTRTCMessage(event) {
             try {
                 const data = JSON.parse(new TextDecoder().decode(event.data));
@@ -883,7 +1062,7 @@
             }
         }
 
-        // 记录已静音的用户，避免重复操作
+        // 处理音量变化
         const mutedUsers = new Set();
         function handleAudioVolume(event) {
             event.result.forEach(async ({ userId, volume }) => {
@@ -906,7 +1085,239 @@
             }
         }
 
-        // 识别语言配置
+        // ========================================
+        // 6. 视频功能模块
+        // ========================================
+        async function toggleCamera() {
+            if (!trtcState.client) {
+                alert('请先开始翻译');
+                return;
+            }
+
+            const cameraBtn = document.getElementById('camera-toggle');
+            const videoToggleBtn = document.getElementById('video-toggle');
+            const videoContainer = document.getElementById('video-container');
+            const btnText = cameraBtn.querySelector('span:last-child');
+
+            try {
+                if (!trtcState.isVideoEnabled) {
+                    // 开启摄像头
+                    await trtcState.client.startLocalVideo({ view: 'local-video' });
+                    trtcState.isVideoEnabled = true;
+                    trtcState.isVideoViewVisible = true;
+
+                    btnText.textContent = '关闭摄像头';
+                    cameraBtn.classList.add('active');
+                    videoContainer.style.display = 'flex';
+                    videoToggleBtn.style.display = 'inline-flex';
+                } else {
+                    // 关闭摄像头
+                    await trtcState.client.stopLocalVideo();
+                    trtcState.isVideoEnabled = false;
+                    trtcState.isVideoViewVisible = false;
+
+                    btnText.textContent = '开启摄像头';
+                    cameraBtn.classList.remove('active');
+                    videoContainer.style.display = 'none';
+                    videoToggleBtn.style.display = 'none';
+
+                    // 清空视频容器
+                    document.getElementById('local-video').innerHTML = '';
+                    document.getElementById('remote-video').innerHTML = '';
+                }
+            } catch (error) {
+                console.error('视频操作失败:', error);
+                alert(`视频操作失败: ${error.message}`);
+            }
+        }
+
+        function toggleVideoView() {
+            const videoContainer = document.getElementById('video-container');
+            const videoToggleBtn = document.getElementById('video-toggle');
+            const btnText = videoToggleBtn.querySelector('span:last-child');
+
+            if (trtcState.isVideoViewVisible) {
+                videoContainer.style.display = 'none';
+                trtcState.isVideoViewVisible = false;
+                btnText.textContent = '显示视频';
+            } else {
+                videoContainer.style.display = 'flex';
+                trtcState.isVideoViewVisible = true;
+                btnText.textContent = '隐藏视频';
+            }
+        }
+
+        // 处理远端视频流
+        async function handleRemoteVideo(event) {
+            const { userId, streamType } = event;
+            console.log('远端视频可用:', userId, streamType);
+
+            // 不订阅AI机器人的视频
+            if (userId.startsWith('ai_')) {
+                console.log('跳过AI用户视频:', userId);
+                return;
+            }
+
+            try {
+                await trtcState.client.startRemoteVideo({
+                    userId: userId,
+                    streamType: streamType,
+                    view: 'remote-video'
+                });
+                console.log('成功订阅远端视频:', userId);
+            } catch (error) {
+                console.error('订阅远端视频失败:', error);
+            }
+        }
+
+        function handleRemoteVideoUnavailable(event) {
+            const { userId } = event;
+            console.log('远端视频不可用:', userId);
+
+            // 清空远端视频容器
+            if (!userId.startsWith('ai_')) {
+                const remoteVideoContainer = document.getElementById('remote-video');
+                if (remoteVideoContainer) {
+                    remoteVideoContainer.innerHTML = '';
+                }
+            }
+        }
+
+        // ========================================
+        // 7. 用户管理和通知
+        // ========================================
+        function handleUserEnter(event) {
+            const { userId } = event;
+            console.log('用户加入房间:', userId);
+
+            // 不显示AI用户的加入提示
+            if (userId.startsWith('ai_')) {
+                return;
+            }
+
+            // 添加到远端用户集合
+            if (!trtcState.remoteUsers.has(userId)) {
+                trtcState.remoteUsers.add(userId);
+                trtcState.userCount = 1 + trtcState.remoteUsers.size;
+            }
+
+            const friendlyName = getFriendlyUserName(userId);
+            showNotification(`${friendlyName} 加入了房间`, 'join');
+
+            // 更新连接状态显示
+            const connectionStatus = document.getElementById('connection-status');
+            if (connectionStatus) {
+                const humanUserCount = Array.from(trtcState.remoteUsers).filter(id => !id.startsWith('ai_')).length + 1;
+                connectionStatus.textContent = `已连接(${humanUserCount}人)`;
+                connectionStatus.classList.add('active');
+            }
+        }
+
+        function handleUserLeave(event) {
+            const { userId, reason } = event;
+            console.log('用户离开房间:', userId, '原因:', reason);
+
+            // 不显示AI用户的离开提示
+            if (userId.startsWith('ai_')) {
+                return;
+            }
+
+            // 从远端用户集合移除
+            if (trtcState.remoteUsers.has(userId)) {
+                trtcState.remoteUsers.delete(userId);
+                trtcState.userCount = 1 + trtcState.remoteUsers.size;
+            }
+
+            const friendlyName = getFriendlyUserName(userId);
+            showNotification(`${friendlyName} 离开了房间`, 'leave');
+
+            // 更新连接状态显示
+            const connectionStatus = document.getElementById('connection-status');
+            if (connectionStatus) {
+                const humanUserCount = Array.from(trtcState.remoteUsers).filter(id => !id.startsWith('ai_')).length + 1;
+                connectionStatus.textContent = humanUserCount > 1 ? `已连接(${humanUserCount}人)` : '已连接';
+                if (humanUserCount === 1) {
+                    connectionStatus.classList.remove('active');
+                }
+            }
+        }
+
+        // 显示通知
+        function showNotification(message, type = 'join') {
+            // 创建通知元素
+            const notification = document.createElement('div');
+            notification.className = `notification-toast ${type === 'leave' ? 'leave' : ''}`;
+
+            const icon = type === 'join' ? '👋' : '👋';
+            notification.innerHTML = `
+                <span class="notification-icon">${icon}</span>
+                <span class="notification-message">${message}</span>
+            `;
+
+            // 添加到页面
+            document.body.appendChild(notification);
+
+            // 触发显示动画
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+
+            // 3秒后自动消失
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, 3000);
+
+            // 播放提示音（可选）
+            playNotificationSound(type);
+        }
+
+        // 播放提示音
+        function playNotificationSound(type) {
+            try {
+                // 创建简单的音频提示
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+
+                // 设置音调（加入用高音，离开用低音）
+                oscillator.frequency.value = type === 'join' ? 800 : 400;
+                oscillator.type = 'sine';
+
+                // 设置音量渐变
+                gainNode.gain.value = 0.1;
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+
+                // 播放
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.2);
+            } catch (e) {
+                // 忽略音频播放错误（用户可能还没有与页面交互）
+                console.log('音频提示跳过:', e.message);
+            }
+        }
+
+        // 获取友好的用户名称
+        function getFriendlyUserName(userId) {
+            if (userId === trtcState.currentUserId) {
+                return '你';
+            }
+            // 提取用户ID中的数字部分作为简短标识
+            const match = userId.match(/\d+/);
+            if (match) {
+                return `用户${match[0].slice(-4)}`;
+            }
+            return userId;
+        }
+
+        // ========================================
+        // 8. 语言配置
+        // ========================================
         const RECOGNITION_LANGUAGES = {
             "16k_zh_en_caption": "中英caption",
             "en": "英语",
@@ -1136,7 +1547,9 @@
             }
         }
 
-        // UI 更新
+        // ========================================
+        // 9. UI更新和字幕管理
+        // ========================================
         function updateUI() {
             const roomState = document.getElementById('room_state')?.value || '';
             const robotState = document.getElementById('robot_state')?.value || '';
@@ -1192,7 +1605,9 @@
             }
         }
 
-        // 语言选择
+        // ========================================
+        // 10. 语言选择和验证
+        // ========================================
         function validateLanguageSelection() {
             const sourceLanguage = document.getElementById('source-language').value;
             const errorDiv = document.getElementById('language-error');
@@ -1333,7 +1748,9 @@
             }
         }
 
-        // 翻译控制
+        // ========================================
+        // 11. 翻译控制（启动/停止）
+        // ========================================
         async function startTranslation() {
             if (state.isProcessing || !validateLanguageSelection()) return;
             
@@ -1466,6 +1883,25 @@
                 document.getElementById('source-language').disabled = false;
                 document.getElementById('target-languages-btn').disabled = false;
                 validateLanguageSelection();
+
+                // 重置视频状态
+                trtcState.isVideoEnabled = false;
+                trtcState.isVideoViewVisible = false;
+                const cameraBtn = document.getElementById('camera-toggle');
+                const videoToggleBtn = document.getElementById('video-toggle');
+                const videoContainer = document.getElementById('video-container');
+                if (cameraBtn) {
+                    cameraBtn.classList.remove('active');
+                    cameraBtn.querySelector('span:last-child').textContent = '开启摄像头';
+                }
+                if (videoToggleBtn) {
+                    videoToggleBtn.style.display = 'none';
+                }
+                if (videoContainer) {
+                    videoContainer.style.display = 'none';
+                    document.getElementById('local-video').innerHTML = '';
+                    document.getElementById('remote-video').innerHTML = '';
+                }
                 
             } catch (error) {
                 console.error('停止失败:', error);
@@ -1479,6 +1915,9 @@
             }
         }
 
+        // ========================================
+        // 12. 页面初始化
+        // ========================================
         document.addEventListener('DOMContentLoaded', function() {
             loadLanguageOptions();
             initializeDefaultTargetLanguages();
