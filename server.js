@@ -558,7 +558,7 @@ app.post('/interpretation-v2', async (req, res) => {
 /**
  * POST /interpretation
  */
-app.post('/interpretation', (req, res) => {
+app.post('/interpretation1', (req, res) => {
   try {
     const { sdkAppId, roomId, userId, userSig, robotId, robotSig, agentConfig: clientAgentConfig, sttConfig, llmConfig, ttsConfig, experimentalParams } = req.body || {};
     
@@ -622,6 +622,109 @@ app.post('/interpretation', (req, res) => {
   } catch (error) {
     console.error('Error in interpretation', error);
     return res.status(500).json({ error: error.message });
+  }
+});
+
+// TRTC配置
+const trtcConfig = {
+  secretId: process.env.TENCENT_SECRET_ID,
+  secretKey: process.env.TENCENT_SECRET_KEY,
+  region: process.env.TENCENT_REGION || 'ap-guangzhou',
+  endpoint: process.env.TENCENT_ENDPOINT || 'trtc.tencentcloudapi.com',
+  sdkAppId: parseInt(process.env.TRTC_SDK_APP_ID || '0'),
+  sdkSecretKey: process.env.TRTC_SECRET_KEY, // 用于生成UserSig
+  expireTime: 86400
+};
+
+/**
+ * Create a new TRTC client instance
+ * @returns {Object} New TRTC client instance
+ */
+function createTrtcClient() {
+  if (!trtcConfig.secretId || !trtcConfig.secretKey) {
+    throw new Error('TRTC configuration missing. Please set environment variables.');
+  }
+  
+  console.log('Creating new TRTC client');
+  
+  return new TrtcClient({
+    credential: {
+      secretId: trtcConfig.secretId,
+      secretKey: trtcConfig.secretKey,
+    },
+    region: trtcConfig.region,
+    profile: {
+      httpProfile: {
+        endpoint: trtcConfig.endpoint,
+      },
+    },
+  });
+}
+
+
+/**
+ * Start simultaneous interpretation using transcription API
+ * POST /interpretation
+ */
+app.post('/interpretation', async (req, res) => {
+  try {
+    const { ...requestData } = req.body;
+    
+    // Validate required parameters
+    if (!requestData.SdkAppId || !requestData.RoomId) {
+      return res.status(400).json({ 
+        error: 'Missing required parameters: SdkAppId, RoomId' 
+      });
+    }
+    
+    const client = createTrtcClient();
+    
+    console.log('🌐 Starting simultaneous interpretation:', JSON.stringify(requestData, null, 2));
+    
+    const result = await client.StartAITranscription(requestData);
+    console.log('✅ Simultaneous interpretation started:', JSON.stringify(result, null, 2));
+    
+    res.json({
+      TaskId: result.TaskId,
+      userInfo: {
+        sdkAppId: requestData.SdkAppId,
+        roomId: requestData.RoomId,
+        userId: requestData.TranscriptionParams?.UserId,
+        userSig: requestData.TranscriptionParams?.UserSig,
+        robotId: requestData.TranscriptionParams?.TargetUserId
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error starting interpretation:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Stop simultaneous interpretation
+ * DELETE /interpretation
+ */
+app.delete('/interpretation', async (req, res) => {
+  try {
+    const { TaskId } = req.body;
+    
+    if (!TaskId) {
+      return res.status(400).json({ 
+        error: 'Missing required field: TaskId'
+      });
+    }
+    
+    const client = createTrtcClient();
+    
+    console.log('🛑 Stopping interpretation:', { TaskId });
+    
+    const data = await client.StopAITranscription({ TaskId });
+    
+    console.log('✅ Interpretation stopped successfully');
+    res.json(data);
+  } catch (error) {
+    console.error('❌ Interpretation stop failed:', error.message);
+    res.status(500).json({ error: error.message });
   }
 });
 
