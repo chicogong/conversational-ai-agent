@@ -846,6 +846,8 @@
                     <div class="language-selector">
                         <label for="voice-type">音色选择</label>
                         <select id="voice-type">
+                            <option value="leo_89dyrn2dg8tsyzufsslke">leo-voice</option>
+                            <option value="chico_t0sil93mfdwf8blo9srij">chico-voice</option>
                             <option value="female-kefu-xiaorui">女声小睿</option>
                             <option value="Chinese (Mandarin)_IntellectualGirl">知性女声</option>
                             <option value="male-qn-qingse">青年清澈男声</option>
@@ -1846,7 +1848,25 @@
                             {"Source": "人工智能", "Target": "AI"},
                             {"Source": "AI", "Target": "人工智能"},
                             {"Source": "自然语言处理", "Target": "NLP"},
-                            {"Source": "NLP", "Target": "自然语言处理"}
+                            {"Source": "NLP", "Target": "自然语言处理"},
+                            {"Source": "远场人声抑制", "Target": "Far-field Voice Suppression"},
+                            {"Source": "Far-field Voice Suppression", "Target": "远场人声抑制"},
+                            {"Source": "误打断", "Target": "False Interruption"},
+                            {"Source": "False Interruption", "Target": "误打断"},
+                            {"Source": "通话能力", "Target": "Communication Capability"},
+                            {"Source": "Communication Capability", "Target": "通话能力"},
+                            {"Source": "延时", "Target": "Latency"},
+                            {"Source": "Latency", "Target": "延时"},
+                            {"Source": "噪音环境", "Target": "Noisy Conditions"},
+                            {"Source": "Noisy Conditions", "Target": "噪音环境"},
+                            {"Source": "对话体验", "Target": "Conversation Experience"},
+                            {"Source": "Conversation Experience", "Target": "对话体验"},
+                            {"Source": "超拟人", "Target": "Hyper-realistic"},
+                            {"Source": "Hyper-realistic", "Target": "超拟人"},
+                            {"Source": "AI对话", "Target": "AI Conversation"},
+                            {"Source": "AI Conversation", "Target": "AI对话"},
+                            {"Source": "AI服务", "Target": "AI Service"},
+                            {"Source": "AI Service", "Target": "AI服务"}
                         ]
                     }
                 };
@@ -1957,32 +1977,58 @@
         function initializeDemoDefaults() {
             // Demo热词列表（统一权重100）
             const demoHotwords = [
+                // 人名
+                '张工|100',
+                'David|100',
+                // 产品和服务
                 '腾讯云|100',
                 'Tencent Cloud|100',
                 'TRTC|100',
                 'IM|100',
+                '实时音视频|100',
+                '即时通信|100',
+                '音视频通话|100',
+                'Audio/Video Call|100',
+                '超低延时|100',
+                'Ultra-low Latency|100',
+                '通话能力|100',
+                'Communication Capability|100',
+                '延时|100',
+                'Latency|100',
+                // AI服务
                 'ASR|100',
                 'TTS|100',
                 'VAD|100',
                 'LLM|100',
                 'AI|100',
                 'NLP|100',
-                '实时音视频|100',
-                '即时通信|100',
-                '音视频通话|100',
-                'Audio/Video Call|100',
-                '旁路推流|100',
-                'Relayed Push|100',
-                '云端录制|100',
-                'Cloud Recording|100',
-                '超低延时|100',
-                'Ultra-low Latency|100',
                 '语音识别|100',
                 '语音合成|100',
                 '语音活动检测|100',
                 '大语言模型|100',
                 '人工智能|100',
                 '自然语言处理|100',
+                'AI对话|100',
+                'AI Conversation|100',
+                'AI服务|100',
+                'AI Service|100',
+                // AI对话特性
+                '远场人声抑制|100',
+                'Far-field Voice Suppression|100',
+                '误打断|100',
+                'False Interruption|100',
+                '高扩展性|100',
+                '噪音环境|100',
+                'Noisy Conditions|100',
+                '对话体验|100',
+                'Conversation Experience|100',
+                '超拟人|100',
+                'Hyper-realistic|100',
+                // 技术特性
+                '旁路推流|100',
+                'Relayed Push|100',
+                '云端录制|100',
+                'Cloud Recording|100',
                 '跨平台|100',
                 'Cross-platform|100',
                 '私有化部署|100',
