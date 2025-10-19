@@ -1036,7 +1036,7 @@
                     const { sender, payload } = data;
                     const isRobot = sender.includes('ai_');
                     if (sender.includes('user_')) {
-                        trtcState.client.setRemoteAudioVolume(sender, 5);
+                        trtcState.client.setRemoteAudioVolume(sender, 40);
                         console.log(`setRemoteAudioVolume for ${sender}`)
                     }
                     // 如果是AI消息且有translation_text字段，优先使用translation_text
@@ -1813,7 +1813,41 @@
                         "TargetLanguages": state.targetLanguages,
                         "TTSConfig": {
                             "VoiceId": document.getElementById('voice-type').value || "Chinese (Mandarin)_IntellectualGirl"
-                        }
+                        },
+                        "Terminology": [
+                            {"Source": "腾讯云", "Target": "Tencent Cloud"},
+                            {"Source": "Tencent Cloud", "Target": "腾讯云"},
+                            {"Source": "实时音视频", "Target": "TRTC"},
+                            {"Source": "TRTC", "Target": "实时音视频"},
+                            {"Source": "即时通信", "Target": "IM"},
+                            {"Source": "IM", "Target": "即时通信"},
+                            {"Source": "音视频通话", "Target": "Audio/Video Call"},
+                            {"Source": "Audio/Video Call", "Target": "音视频通话"},
+                            {"Source": "旁路推流", "Target": "Relayed Push"},
+                            {"Source": "Relayed Push", "Target": "旁路推流"},
+                            {"Source": "云端录制", "Target": "Cloud Recording"},
+                            {"Source": "Cloud Recording", "Target": "云端录制"},
+                            {"Source": "超低延时", "Target": "Ultra-low Latency"},
+                            {"Source": "Ultra-low Latency", "Target": "超低延时"},
+                            {"Source": "跨平台", "Target": "Cross-platform"},
+                            {"Source": "Cross-platform", "Target": "跨平台"},
+                            {"Source": "SDK", "Target": "软件开发工具包"},
+                            {"Source": "软件开发工具包", "Target": "SDK"},
+                            {"Source": "私有化部署", "Target": "Private Deployment"},
+                            {"Source": "Private Deployment", "Target": "私有化部署"},
+                            {"Source": "语音识别", "Target": "ASR"},
+                            {"Source": "ASR", "Target": "语音识别"},
+                            {"Source": "语音合成", "Target": "TTS"},
+                            {"Source": "TTS", "Target": "语音合成"},
+                            {"Source": "语音活动检测", "Target": "VAD"},
+                            {"Source": "VAD", "Target": "语音活动检测"},
+                            {"Source": "大语言模型", "Target": "LLM"},
+                            {"Source": "LLM", "Target": "大语言模型"},
+                            {"Source": "人工智能", "Target": "AI"},
+                            {"Source": "AI", "Target": "人工智能"},
+                            {"Source": "自然语言处理", "Target": "NLP"},
+                            {"Source": "NLP", "Target": "自然语言处理"}
+                        ]
                     }
                 };
                 
@@ -1831,8 +1865,8 @@
                     userSig: credentials.userSig
                 });
                 console.log(`✅ 已静音自己的机器人 ${JSON.stringify(userInfo)}`);
-                await trtcState.client.muteRemoteAudio(userInfo.userId, true);
-                // await trtcState.client.setRemoteAudioVolume(userInfo.userId, 5);
+                // await trtcState.client.muteRemoteAudio(userInfo.userId, true);
+                await trtcState.client.setRemoteAudioVolume(userInfo.userId, 10);
                 setUIStatus('connection', '已连接');
                 updateStatus('room', 'RTC已连接');
                 
@@ -1918,16 +1952,63 @@
         // ========================================
         // 12. 页面初始化
         // ========================================
+
+        // 初始化Demo默认配置
+        function initializeDemoDefaults() {
+            // Demo热词列表（统一权重100）
+            const demoHotwords = [
+                '腾讯云|100',
+                'Tencent Cloud|100',
+                'TRTC|100',
+                'IM|100',
+                'ASR|100',
+                'TTS|100',
+                'VAD|100',
+                'LLM|100',
+                'AI|100',
+                'NLP|100',
+                '实时音视频|100',
+                '即时通信|100',
+                '音视频通话|100',
+                'Audio/Video Call|100',
+                '旁路推流|100',
+                'Relayed Push|100',
+                '云端录制|100',
+                'Cloud Recording|100',
+                '超低延时|100',
+                'Ultra-low Latency|100',
+                '语音识别|100',
+                '语音合成|100',
+                '语音活动检测|100',
+                '大语言模型|100',
+                '人工智能|100',
+                '自然语言处理|100',
+                '跨平台|100',
+                'Cross-platform|100',
+                '私有化部署|100',
+                'Private Deployment|100',
+                'SDK|100',
+                '软件开发工具包|100'
+            ];
+
+            // 填充热词输入框
+            const hotwordInput = document.getElementById('hotword-list');
+            if (hotwordInput) {
+                hotwordInput.value = demoHotwords.join(',');
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             loadLanguageOptions();
             initializeDefaultTargetLanguages();
-            
+            initializeDemoDefaults(); // 初始化Demo配置
+
             document.getElementById('source-language').addEventListener('change', validateLanguageSelection);
             document.getElementById('target-languages-btn').addEventListener('click', openLanguageModal);
             document.getElementById('translation_toggle').addEventListener('click', function() {
                 state.isActive ? stopTranslation() : startTranslation();
             });
-            
+
             // 初始化字幕显示
             updateSubtitleDisplay();
 
