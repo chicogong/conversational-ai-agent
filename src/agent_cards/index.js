@@ -1,6 +1,7 @@
 require('dotenv').config();
 
 module.exports = {
+    thai: require('./thai'),
     take_order: require('./take_order'),
     daji: require('./daji'),
     default: require('./default'),
