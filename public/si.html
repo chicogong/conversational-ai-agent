@@ -1,0 +1,1489 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TRTC AI 同声传译助手</title>
+    <link rel="icon" href="src/agent_cards/assets/star.ico" type="image/x-icon">
+    <style type="text/css">
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            margin: 0;
+            padding: 15px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .main-layout {
+            display: flex;
+            gap: 15px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .main-container {
+            flex: 1;
+            max-width: 700px;
+            background: rgba(255,255,255);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 0;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .subtitles-panel {
+            flex: 1;
+            max-width: 600px;
+            background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.08), 0 8px 32px rgba(0,0,0,0.04);
+            border: 1px solid rgba(255,255,255,0.6);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .subtitles-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            border-radius: 24px 24px 0 0;
+        }
+
+        .logo-header {
+            text-align: center;
+            padding: 25px 30px 15px;
+            border-bottom: 1px solid rgba(103, 126, 234, 0.1);
+            margin-bottom: 25px;
+        }
+
+        .logo-header img {
+            max-width: 200px;
+            max-height: 50px;
+            height: auto;
+            width: auto;
+            object-fit: contain;
+            opacity: 0.8;
+            transition: all 0.3s ease;
+        }
+
+        .logo-header img:hover {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+
+        .main-content {
+            padding: 0 30px 30px;
+        }
+
+        .footer-container {
+            text-align: center;
+            margin-top: 20px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 15px 20px;
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+
+        .footer-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255,255,255,0.9);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 10px 18px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .footer-link:hover {
+            background: rgba(255,255,255,0.25);
+            color: white;
+            transform: translateY(-1px);
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        .footer-text {
+            font-size: 12px;
+            color: rgba(255,255,255,0.7);
+            margin-top: 6px;
+            font-weight: 300;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(103, 126, 234, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(103, 126, 234, 0.2);
+            backdrop-filter: blur(5px);
+        }
+
+        .status-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+        }
+
+        .status-label {
+            font-size: 13px;
+            color: #667eea;
+            margin-bottom: 8px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .status-value {
+            font-size: 15px;
+            font-weight: 600;
+            padding: 10px 18px;
+            border-radius: 25px;
+            background: #f8f9ff;
+            color: #667eea;
+            min-width: 110px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .status-value.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .volume-container {
+            flex: 2;
+            margin: 0 20px;
+        }
+
+        .volume-bar-container {
+            height: 12px;
+            background: #f1f5f9;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-top: 8px;
+            position: relative;
+            border: 1px solid #e2e8f0;
+        }
+
+        .volume-bar {
+            height: 100%;
+            width: 0%;
+            background: #10b981;
+            transition: width 0.3s ease;
+            border-radius: 4px;
+            position: relative;
+        }
+
+        .volume-bar.active {
+            animation: pulse 0.8s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.8; }
+            100% { opacity: 1; }
+        }
+
+        .subtitles-container {
+            background: #2d3748;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 25px;
+            min-height: 200px;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid rgba(103, 126, 234, 0.3);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+
+        .subtitles-content {
+            color: white;
+            line-height: 1.6;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 130px;
+            gap: 16px;
+        }
+
+        .subtitles-container .subtitle-original {
+            font-size: 16px;
+            color: #75f175 !important;
+            font-style: italic;
+            opacity: 1;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .subtitles-container .subtitle-translated {
+            font-size: 18px;
+            color: #7ae6e6 !important;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+
+        .subtitles-placeholder {
+            color: #cbd5e0;
+            font-size: 16px;
+            font-style: italic;
+            opacity: 0.8;
+            font-weight: 400;
+        }
+
+        .controls-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .language-selector {
+            flex: 1;
+            min-width: 180px;
+        }
+
+        .language-selector select {
+            width: 100%;
+            padding: 12px 18px;
+            font-size: 15px;
+            border: 2px solid #e8f0ff;
+            border-radius: 12px;
+            background: white;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 12px center;
+            background-repeat: no-repeat;
+            background-size: 16px;
+        }
+
+        .language-selector select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .language-selector select:disabled {
+            background-color: #f3f4f6;
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .language-selector label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #667eea;
+            font-size: 14px;
+        }
+
+        .language-pair-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .language-error {
+            color: #ef4444;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .toggle-button {
+            flex: 1;
+            min-width: 120px;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            border-radius: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            background: #667eea;
+            color: white;
+            border: 1px solid #667eea;
+        }
+
+        .toggle-button:hover {
+            background: #5a67d8;
+            border-color: #5a67d8;
+        }
+
+        .toggle-button.active {
+            background: #ef4444;
+            border-color: #ef4444;
+        }
+
+        .toggle-button.active:hover {
+            background: #dc2626;
+            border-color: #dc2626;
+        }
+
+        .toggle-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background: #9ca3af;
+            border-color: #9ca3af;
+        }
+
+        .toggle-button:disabled:hover {
+            background: #9ca3af;
+            border-color: #9ca3af;
+        }
+
+        .toggle-text {
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        /* 多语言选择弹窗样式 */
+        .language-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .language-modal.show {
+            display: flex;
+        }
+
+        .language-modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .language-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .language-modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .language-modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+            padding: 5px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .language-modal-close:hover {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .language-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 25px;
+            max-height: 60vh;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .language-option {
+            display: flex;
+            align-items: center;
+            padding: 15px 18px;
+            border: 2px solid #e8f0ff;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            position: relative;
+        }
+
+        .language-option:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .language-option.selected {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        .language-option input[type="checkbox"] {
+            margin-right: 12px;
+            transform: scale(1.3);
+            pointer-events: none;
+        }
+
+        .language-option label {
+            cursor: pointer;
+            font-weight: 500;
+            flex: 1;
+            pointer-events: none;
+        }
+
+        .language-modal-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+        }
+
+        .language-modal-btn {
+            padding: 16px 32px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 120px;
+            font-size: 16px;
+        }
+
+        .language-modal-btn.cancel {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .language-modal-btn.cancel:hover {
+            background: #e0e0e0;
+        }
+
+        .language-modal-btn.confirm {
+            background: #667eea;
+            color: white;
+        }
+
+        .language-modal-btn.confirm:hover {
+            background: #5a67d8;
+        }
+
+        .selected-languages-display.empty {
+            font-style: italic;
+            opacity: 0.7;
+        }
+
+        .subtitles-header {
+            font-size: 18px;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 16px;
+            text-align: center;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(103, 126, 234, 0.15);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+
+
+        .subtitles-content-panel {
+            background: #f8f9ff;
+            border-radius: 12px;
+            padding: 15px;
+            height: calc(100vh - 200px);
+            overflow-y: auto;
+            color: #333;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            border: 1px solid #e8f0ff;
+        }
+
+        .subtitle-messages {
+            font-size: 13px;
+            line-height: 1.5;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .subtitle-message {
+            background: white;
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px solid #e8f0ff;
+            margin-bottom: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .subtitle-message:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .subtitle-language {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 14px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        .subtitle-content {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .subtitle-row {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .subtitles-content-panel .subtitle-original {
+            flex: 1;
+            background: rgba(16, 185, 129, 0.15);
+            padding: 8px 12px;
+            border-radius: 6px;
+            border-left: 3px solid #10b981;
+            color: #1f2937;
+            font-weight: 500;
+        }
+
+        .subtitles-content-panel .subtitle-translated {
+            flex: 1;
+            background: rgba(245, 158, 11, 0.15);
+            padding: 8px 12px;
+            border-radius: 6px;
+            border-left: 3px solid #f59e0b;
+            color: #1f2937;
+            font-weight: 500;
+        }
+
+        .subtitle-timestamp {
+            font-size: 10px;
+            color: #a0aec0;
+            margin-top: 6px;
+            font-weight: 400;
+        }
+
+        .subtitle-label {
+            font-size: 14px;
+            margin-right: 6px;
+            display: inline;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .language-flag {
+            font-size: 18px;
+        }
+
+        @media screen and (max-width: 1200px) {
+            .main-layout { flex-direction: column; }
+            .subtitles-panel { max-width: none; }
+            .subtitles-content-panel { height: 300px; }
+        }
+
+        @media screen and (max-width: 768px) {
+            .subtitle-messages { max-height: 200px; }
+            body { padding: 10px; }
+            .main-content { padding: 0 20px 25px; }
+            .status-bar { flex-direction: column; gap: 15px; padding: 16px; }
+            .status-item { width: 100%; flex-direction: row; justify-content: space-between; align-items: center; }
+            .status-label { margin-bottom: 0; margin-right: 10px; }
+            .volume-container { margin: 0; width: 100%; flex-direction: column; }
+            .subtitles-container { padding: 25px 20px; min-height: 160px; }
+            .subtitles-content { min-height: 110px; gap: 12px; }
+            .subtitle-original { font-size: 16px; }
+            .subtitle-translated { font-size: 22px; }
+            .subtitles-placeholder { font-size: 16px; }
+            .controls-container { flex-direction: column; gap: 15px; }
+            .language-pair-container { gap: 10px; }
+            .language-selector { min-width: auto; }
+            .language-selector select { padding: 12px 16px; font-size: 15px; }
+            .toggle-button { min-width: 100%; padding: 12px 20px; font-size: 15px; border-radius: 35px; }
+            .subtitles-content-panel { height: 250px; }
+        }
+    </style>
+</head>
+
+<body>
+    <div style="display: none;">
+        <input id="room_state" type="text" readonly value="RTC未连接"/>
+        <input id="robot_state" type="text" readonly value="Agent未激活"/>
+        <textarea id="subtitle-text-place" readonly></textarea>
+    </div>
+    <div class="main-layout">
+        <div class="main-container">
+            <div class="logo-header">
+                <img src="src/agent_cards/assets/logo_rtc.png" alt="Tencent RTC Logo" />
+            </div>
+        
+        <div class="main-content">
+            <div class="status-bar">
+                <div class="status-item">
+                    <div class="status-label">连接状态</div>
+                    <div id="connection-status" class="status-value">未连接</div>
+                </div>
+                <div class="volume-container">
+                    <div class="status-label">音量</div>
+                    <div class="volume-bar-container">
+                        <div id="volume-indicator" class="volume-bar"></div>
+                    </div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">翻译状态</div>
+                    <div id="translation-status" class="status-value">待机中</div>
+                </div>
+            </div>
+
+            <div class="subtitles-container">
+                <div id="subtitles-display" class="subtitles-content">
+                    <div class="subtitles-placeholder">选择识别语言和输出语言，然后点击开始翻译</div>
+                </div>
+            </div>
+
+            <div class="controls-container">
+                <div class="language-pair-container">
+                    <div class="language-selector">
+                        <label for="translation-mode">翻译模式</label>
+                        <select id="translation-mode">
+                            <option value="1">文字翻译</option>
+                            <option value="2" selected>语音同传</option>
+                        </select>
+                    </div>
+                    <div class="language-selector">
+                        <label for="voice-type">音色选择</label>
+                        <select id="voice-type">
+                            <option value="kefu-herui3">女声小睿</option>
+                            <option value="Chinese (Mandarin)_IntellectualGirl">知性女声</option>
+                            <option value="male-qn-qingse">青年清澈男声</option>
+                            <option value="female-tianmei">甜美女声</option>
+                            <option value="danya_xuejie">淡雅学姐</option>
+                            <option value="male-qn-daxuesheng-jingpin">精品男声</option>
+                        </select>
+                    </div>
+                    <div class="language-selector">
+                        <label for="semantic-eagerness">语义断句等级</label>
+                        <select id="semantic-eagerness">
+                            <option value="off" selected>关闭</option>
+                            <option value="low">low</option>
+                            <option value="medium">medium</option>
+                            <option value="high">high</option>
+                            <option value="auto">auto</option>
+                        </select>
+                    </div>
+                    <div class="language-selector">
+                        <label for="source-language">识别语言</label>
+                        <select id="source-language">
+                            <option value="">请选择识别语言</option>
+                        </select>
+                    </div>
+                    <div class="language-selector">
+                        <label for="vad-silence-time">VAD 静默阈值(ms)</label>
+                        <input id="vad-silence-time" type="number" min="240" max="2000" value="1000" style="width: 100%; padding: 12px 18px; border: 2px solid #e8f0ff; border-radius: 12px;">
+                    </div>
+                    <div class="language-selector">
+                        <label for="vad-level">VAD 远场人声抑制等级 (0-3)</label>
+                        <select id="vad-level">
+                            <option value="0">0（关闭）</option>
+                            <option value="1">1</option>
+                            <option value="2" selected>2（推荐）</option>
+                            <option value="3">3（最强）</option>
+                        </select>
+                    </div>
+                    <div class="language-selector">
+                        <label for="hotword-list">热词表（逗号分隔，格式：词|权重）</label>
+                        <input id="hotword-list" type="text" placeholder="同声传译|10,实时|5,TRTC|11" style="width: 100%; padding: 12px 18px; border: 2px solid #e8f0ff; border-radius: 12px;">
+                    </div>
+                    <div class="language-selector">
+                        <label for="target-languages">输出语言</label>
+                        <input id="target-languages-btn" type="text" readonly placeholder="选择目标语言" style="width: 100%; padding: 12px 18px; border: 2px solid #e8f0ff; border-radius: 12px; background: white; color: #333; cursor: pointer; background-image: url('data:image/svg+xml,%3csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3e%3cpath stroke=\'%236b7280\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M6 8l4 4 4-4\'/%3e%3c/svg%3e'); background-position: right 12px center; background-repeat: no-repeat; background-size: 16px;">
+                    </div>
+                </div>
+                <div class="language-error" id="language-error">识别语言和输出语言不能相同</div>
+                <button id="translation_toggle" class="toggle-button">
+                    <span class="toggle-text">🎤 开始翻译</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+        <div class="subtitles-panel">
+            <div class="subtitles-header">📝 多语言字幕展示</div>
+            
+            <div class="subtitles-content-panel">
+                <div id="subtitle-display-messages" class="subtitle-messages">
+                    <div style="text-align: center; color: #a0aec0; padding: 20px; font-style: italic;">等待字幕内容...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 多语言选择弹窗 -->
+    <div id="language-modal" class="language-modal">
+        <div class="language-modal-content">
+            <div class="language-modal-header">
+                <h3 class="language-modal-title">选择目标语言</h3>
+                <button class="language-modal-close" onclick="closeLanguageModal()">&times;</button>
+            </div>
+            <div id="language-grid" class="language-grid">
+                <!-- 语言选项将通过JavaScript动态生成 -->
+            </div>
+            <div class="language-modal-actions">
+                <button class="language-modal-btn cancel" onclick="closeLanguageModal()">取消</button>
+                <button class="language-modal-btn confirm" onclick="confirmLanguageSelection()">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-container">
+        <a href="https://trtc.io/solutions/conversational-ai" target="_blank" class="footer-link">
+            <span>🚀</span>
+            <span>了解更多 TRTC AI 对话解决方案</span>
+        </a>
+        <div class="footer-text">Powered by Tencent RTC</div>
+    </div>
+
+    <script src='https://web.sdk.qcloud.com/trtc/webrtc/v5/dist/trtc.js'></script>
+    
+    <script>
+        // 基础配置
+        const API_BASE_URL = window.location.origin;
+        const MESSAGE_TYPES = { CONVERSATION: 10000, STATE_CHANGE: 10001, ERROR_CALLBACK: 10030, METRICS_CALLBACK: 10020 };
+        const MAX_TARGET_LANGUAGES = 5;
+        
+        // TRTC 状态
+        const trtcState = { client: null, currentUserId: null, botUserId: null };
+        let prevVolume = 0;
+
+        // API 请求
+        async function apiRequest(endpoint, data, method = "POST") {
+            const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                method: method,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            });
+            if (!response.ok) throw new Error(`API error: ${response.status}`);
+            return await response.json();
+        }
+
+        // TRTC 房间管理
+        async function enterTRTCRoom(params) {
+            const client = trtcState.client = TRTC.create();
+            await client.enterRoom({
+                roomId: parseInt(params.roomId),
+                scene: "rtc",
+                sdkAppId: params.sdkAppId,
+                userId: params.userId,
+                userSig: params.userSig,
+            });
+            
+            client.on(TRTC.EVENT.CUSTOM_MESSAGE, handleTRTCMessage);
+            client.on(TRTC.EVENT.AUDIO_VOLUME, handleAudioVolume);
+            client.enableAudioVolumeEvaluation(50);
+            await client.startLocalAudio();
+            return client;
+        }
+
+        async function exitTRTCRoom() {
+            if (trtcState.client) {
+                await trtcState.client.exitRoom();
+                trtcState.client.destroy();
+                trtcState.client = null;
+            }
+        }
+
+        // 消息处理
+        function handleTRTCMessage(event) {
+            try {
+                const data = JSON.parse(new TextDecoder().decode(event.data));
+                console.log('receive message:', JSON.stringify(data, null, 2));
+                
+                if (data.type === MESSAGE_TYPES.CONVERSATION) {
+                    const { sender, payload } = data;
+                    const isRobot = sender.includes('ai_');
+                    // 如果是AI消息且有translation_text字段，优先使用translation_text
+                    const displayText = isRobot && payload.translation_text ? payload.translation_text : payload.text;
+                    const translationLang = isRobot && payload.translation_language ? payload.translation_language : null;
+                    addMessage(sender, displayText, isRobot ? 'ai' : 'user', payload.roundid, payload.end, translationLang);
+                    updateSubtitles();
+                } 
+                else if (data.type === MESSAGE_TYPES.STATE_CHANGE) {
+                    console.log('State change:', data.payload);
+                    const stateMap = { 1: '聆听中', 2: '分析中', 3: '翻译中', 4: '已中断' };
+                    updateStatus('ai', stateMap[data.payload.state] || '未知状态');
+                }
+                else if (data.type === MESSAGE_TYPES.ERROR_CALLBACK) {
+                    console.error('AI Service Error:', data.payload);
+                }
+                else if (data.type === MESSAGE_TYPES.METRICS_CALLBACK) {
+                    console.log('Metrics:', data.payload);
+                }
+            } catch (error) {
+                console.error('TRTC message error:', error);
+            }
+        }
+
+        function handleAudioVolume(event) {
+            event.result.forEach(({ userId, volume }) => {
+                if (userId === '' || userId === trtcState.botUserId) {
+                    const smoothedVolume = (volume * 0.7) + (prevVolume * 0.3);
+                    prevVolume = smoothedVolume;
+                    updateVolumeBar(smoothedVolume);
+                }
+            });
+        }
+
+        function updateVolumeBar(volume) {
+            const volumeBar = document.getElementById('volume-indicator');
+            if (volumeBar) {
+                const scaledVolume = volume < 5 ? 8 : Math.min(volume * 2.5, 100);
+                volumeBar.style.width = `${scaledVolume}%`;
+                volumeBar.classList.toggle('active', volume > 5);
+            }
+        }
+
+        // 识别语言配置
+        const RECOGNITION_LANGUAGES = {
+            "16k_zh_en_caption": "中英caption",
+            "16k_en_caption": "英语",
+            "zh": "中文",
+            "ja": "日语",
+            "zh-yue": "中国粤语",
+            "vi": "越南语",
+            "ko": "韩语",
+            "id": "印度尼西亚语",
+            "th": "泰语",
+            "pt": "葡萄牙语",
+            "tr": "土耳其语",
+            "ar": "阿拉伯语",
+            "es": "西班牙语",
+            "hi": "印地语",
+            "fr": "法语",
+            "ms": "马来语",
+            "fil": "菲律宾语",
+            "de": "德语",
+            "it": "意大利语",
+            "ru": "俄语",
+            "sv": "瑞典语",
+            "da": "丹麦语",
+            "no": "挪威语"
+        };
+
+        // 翻译输出语言配置
+        const TRANSLATION_LANGUAGES = {
+            "en": "英语",
+            "zh": "中文", 
+            "vi": "越南语",
+            "ja": "日语",
+            "ko": "韩语",
+            "id": "印度尼西亚语",
+            "th": "泰语",
+            "pt": "葡萄牙语",
+            "tr": "土耳其语",
+            "ar": "阿拉伯语",
+            "es": "西班牙语",
+            "hi": "印地语",
+            "fr": "法语",
+            "ms": "马来语",
+            "fil": "菲律宾语",
+            "de": "德语",
+            "it": "意大利语",
+            "ru": "俄语",
+            "sv": "瑞典语",
+            "da": "丹麦语",
+            "no": "挪威语"
+        };
+
+
+        // 应用状态
+        const state = { taskId: null, sourceLanguage: '', targetLanguages: [], isActive: false, isProcessing: false };
+        let lastSubtitle = '';
+        let selectedLanguages = new Set();
+        let subtitleMessages = [];
+
+        // 语言标志映射
+        const LANGUAGE_FLAGS = {
+            '16k_en_caption': '🇺🇸', 'zh': '🇨🇳', 'zh-yue': '🇨🇳', 'ja': '🇯🇵', 'ko': '🇰🇷',
+            'vi': '🇻🇳', 'id': '🇮🇩', 'th': '🇹🇭', 'pt': '🇵🇹', 'tr': '🇹🇷',
+            'ar': '🇸🇦', 'es': '🇪🇸', 'hi': '🇮🇳', 'fr': '🇫🇷', 'ms': '🇲🇾',
+            'fil': '🇵🇭', 'de': '🇩🇪', 'it': '🇮🇹', 'ru': '🇷🇺', 'sv': '🇸🇪',
+            'da': '🇩🇰', 'no': '🇳🇴'
+        };
+
+        // 基础回调函数
+        function addMessage(sender, text, type, roundid, end, translationLang = null) {
+            const element = document.getElementById('subtitle-text-place');
+            if (element) {
+                const langInfo = translationLang ? `[${translationLang}]` : '';
+                element.value += `\n${sender}: ${text}${langInfo}`;
+            }
+            
+            // 添加到字幕面板
+            addSubtitleMessage(sender, text, type, roundid, translationLang);
+        }
+
+        function addSubtitleMessage(sender, text, type, roundid, translationLang = null) {
+            const timestamp = new Date().toLocaleTimeString();
+            const isRobot = type === 'ai';
+            
+            if (isRobot && translationLang) {
+                // AI翻译消息
+                const message = {
+                    id: Date.now() + Math.random(),
+                    timestamp,
+                    language: translationLang,
+                    translatedText: text,
+                    roundid
+                };
+                subtitleMessages.push(message);
+            } else if (!isRobot) {
+                // 用户原始消息
+                const message = {
+                    id: Date.now() + Math.random(),
+                    timestamp,
+                    language: state.sourceLanguage,
+                    originalText: text,
+                    roundid
+                };
+                subtitleMessages.push(message);
+            }
+            
+            updateSubtitleDisplay();
+        }
+
+        function updateSubtitleDisplay() {
+            const container = document.getElementById('subtitle-display-messages');
+            if (!container) return;
+            
+            if (subtitleMessages.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #718096; padding: 32px; font-style: italic; font-size: 16px;">✨ 等待字幕内容...</div>';
+                return;
+            }
+            
+            // 按roundid分组并生成HTML
+            const groups = groupMessagesByRound();
+            const html = Object.keys(groups).reverse().map(roundid => 
+                createSubtitleHTML(roundid, groups[roundid])
+            ).join('');
+            
+            container.innerHTML = html;
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function groupMessagesByRound() {
+            const groups = {};
+            subtitleMessages.forEach(msg => {
+                if (!groups[msg.roundid]) {
+                    groups[msg.roundid] = { original: null, translations: {} };
+                }
+                if (msg.originalText) {
+                    groups[msg.roundid].original = msg;
+                } else if (msg.translatedText) {
+                    // 同轮同语言覆盖显示
+                    groups[msg.roundid].translations[msg.language] = msg;
+                }
+            });
+            return groups;
+        }
+        
+        function createSubtitleHTML(roundid, group) {
+            const translationArray = Object.values(group.translations);
+            if (!group.original && translationArray.length === 0) return '';
+            
+            const timestamp = group.original?.timestamp || translationArray[0]?.timestamp || '';
+            const header = `
+                <div class="subtitle-language">
+                    <span>💬 第 ${roundid} 轮对话</span>
+                    <span style="margin-left: auto; opacity: 0.7;">${timestamp}</span>
+                </div>
+            `;
+            
+            let content = '';
+            if (group.original && translationArray.length > 0) {
+                content = createParallelContent(group.original, translationArray[0]);
+                content += translationArray.slice(1).map(trans => 
+                    createTranslationContent(trans)
+                ).join('');
+            } else if (group.original) {
+                content = createOriginalContent(group.original);
+            } else {
+                content = translationArray.map(trans => 
+                    createTranslationContent(trans)
+                ).join('');
+            }
+            
+            return `<div class="subtitle-message">${header}<div class="subtitle-content">${content}</div></div>`;
+        }
+        
+        function createParallelContent(original, translation) {
+            const transLang = TRANSLATION_LANGUAGES[translation.language] || translation.language;
+            const transFlag = LANGUAGE_FLAGS[translation.language] || '🌐';
+            
+            return `
+                <div class="subtitle-row">
+                    <div class="subtitle-original">
+                        ${original.originalText}
+                    </div>
+                    <div class="subtitle-translated">
+                        ${transFlag} ${transLang}：${translation.translatedText}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function createOriginalContent(original) {
+            const flag = LANGUAGE_FLAGS[original.language] || '🌐';
+            return `
+                <div class="subtitle-row">
+                    <div class="subtitle-original">
+                        <span class="subtitle-label">${flag}</span> ${original.originalText}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function createTranslationContent(translation) {
+            const flag = LANGUAGE_FLAGS[translation.language] || '🌐';
+            return `
+                <div class="subtitle-row">
+                    <div class="subtitle-translated">
+                        <span class="subtitle-label">${flag}</span> ${translation.translatedText}
+                    </div>
+                </div>
+            `;
+        }
+
+        function clearSubtitleMessages() {
+            subtitleMessages = [];
+            updateSubtitleDisplay();
+        }
+
+        function updateStatus(target, status) {
+            const element = document.getElementById(target === 'ai' ? 'robot_state' : 'room_state');
+            if (element) element.value = status;
+            updateUI();
+        }
+
+        function setUIStatus(type, text) {
+            const element = document.getElementById(type === 'connection' ? 'connection-status' : 'translation-status');
+            if (element) {
+                element.textContent = text;
+                element.classList.toggle('active', text.includes('已连接') || text.includes('翻译中'));
+            }
+        }
+
+        // UI 更新
+        function updateUI() {
+            const roomState = document.getElementById('room_state')?.value || '';
+            const robotState = document.getElementById('robot_state')?.value || '';
+            
+            const connectionStatus = roomState.includes('已连接') ? '已连接' : '未连接';
+            const translationStatus = robotState.includes('聆听中') ? '聆听中' : 
+                                     robotState.includes('分析中') ? '分析中' : 
+                                     robotState.includes('翻译中') ? '翻译中' : 
+                                     robotState.includes('已中断') ? '已中断' : '待机中';
+            
+            setUIStatus('connection', connectionStatus);
+            setUIStatus('translation', translationStatus);
+        }
+
+        function updateSubtitles() {
+            const element = document.getElementById('subtitle-text-place');
+            const display = document.getElementById('subtitles-display');
+            const text = element?.value || '';
+            
+            if (text !== lastSubtitle && display) {
+                if (text.trim()) {
+                    const lines = text.split('\n').filter(l => l.trim());
+                    let original = '', translated = '';
+                    
+                    lines.forEach(line => {
+                        const colonIndex = line.indexOf(': ');
+                        if (colonIndex !== -1) {
+                            const sender = line.substring(0, colonIndex);
+                            const content = line.substring(colonIndex + 2);
+                            if (sender.startsWith('user_')) {
+                                original = content;
+                            } else if (sender.startsWith('ai_')) {
+                                // 检查是否有语言标识
+                                const langMatch = content.match(/^(.+?)\[([^\]]+)\]$/);
+                                if (langMatch) {
+                                    translated = `${langMatch[1]} <span style="font-size: 14px; color: #a0aec0; font-weight: 400;">(${langMatch[2]})</span>`;
+                                } else {
+                                    translated = content;
+                                }
+                            }
+                        }
+                    });
+                    
+                    if (original && translated) {
+                        display.innerHTML = `<div class="subtitle-original">${original}</div><div class="subtitle-translated">${translated}</div>`;
+                    } else if (translated || original) {
+                        display.innerHTML = `<div class="subtitle-translated">${translated || original}</div>`;
+                    }
+                } else {
+                    display.innerHTML = `<div class="subtitles-placeholder">等待语音输入...</div>`;
+                }
+                lastSubtitle = text;
+            }
+        }
+
+        // 语言选择
+        function validateLanguageSelection() {
+            const sourceLanguage = document.getElementById('source-language').value;
+            const errorDiv = document.getElementById('language-error');
+            const toggleButton = document.getElementById('translation_toggle');
+            
+            const hasTargetLanguages = state.targetLanguages && state.targetLanguages.length > 0 && state.targetLanguages.length <= MAX_TARGET_LANGUAGES;
+            const sourceInTargets = state.targetLanguages && state.targetLanguages.includes(sourceLanguage);
+            
+            const overLimit = state.targetLanguages && state.targetLanguages.length > MAX_TARGET_LANGUAGES;
+            const isValid = sourceLanguage && hasTargetLanguages && !sourceInTargets && !overLimit;
+            errorDiv.style.display = (sourceInTargets || overLimit) ? 'block' : 'none';
+            errorDiv.textContent = sourceInTargets ? '识别语言不能包含在输出语言中' : (overLimit ? `输出语言最多选择 ${MAX_TARGET_LANGUAGES} 个` : '识别语言和输出语言不能相同');
+            
+            toggleButton.disabled = !isValid;
+            return isValid;
+        }
+
+        function loadLanguageOptions() {
+            const sourceSelect = document.getElementById('source-language');
+            
+            sourceSelect.innerHTML = '<option value="">请选择识别语言</option>';
+            
+            // 使用识别语言列表填充源语言选择器
+            Object.entries(RECOGNITION_LANGUAGES).forEach(([code, name]) => {
+                sourceSelect.innerHTML += `<option value="${code}">${name}</option>`;
+            });
+            
+            sourceSelect.value = '16k_zh_en_caption';
+            
+            // 初始化多语言选择弹窗
+            initializeLanguageModal();
+        }
+
+        // 多语言选择弹窗功能
+        function initializeLanguageModal() {
+            const languageGrid = document.getElementById('language-grid');
+            languageGrid.innerHTML = '';
+            
+            // 使用翻译语言列表填充目标语言选择弹窗
+            Object.entries(TRANSLATION_LANGUAGES).forEach(([code, name]) => {
+                const option = document.createElement('div');
+                option.className = 'language-option';
+                option.innerHTML = `
+                    <input type="checkbox" id="lang-${code}" value="${code}">
+                    <label for="lang-${code}">${name}</label>
+                `;
+                
+                const checkbox = option.querySelector('input');
+                checkbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        if (selectedLanguages.size >= MAX_TARGET_LANGUAGES) {
+                            this.checked = false;
+                            alert(`最多选择 ${MAX_TARGET_LANGUAGES} 个语言`);
+                            return;
+                        }
+                        selectedLanguages.add(code);
+                        option.classList.add('selected');
+                    } else {
+                        selectedLanguages.delete(code);
+                        option.classList.remove('selected');
+                    }
+                    updateSelectedLanguagesDisplay();
+                });
+                
+                option.addEventListener('click', function(e) {
+                    if (e.target.type !== 'checkbox') {
+                        checkbox.checked = !checkbox.checked;
+                        checkbox.dispatchEvent(new Event('change'));
+                    }
+                });
+                
+                languageGrid.appendChild(option);
+            });
+            
+            // 默认选择英语
+            selectedLanguages.add('en');
+            const enCheckbox = document.getElementById('lang-en');
+            if (enCheckbox) {
+                enCheckbox.checked = true;
+                enCheckbox.closest('.language-option').classList.add('selected');
+            }
+            updateSelectedLanguagesDisplay();
+        }
+
+        function openLanguageModal() {
+            document.getElementById('language-modal').classList.add('show');
+        }
+
+        function closeLanguageModal() {
+            document.getElementById('language-modal').classList.remove('show');
+        }
+
+        // 添加键盘事件支持
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const modal = document.getElementById('language-modal');
+                if (modal.classList.contains('show')) {
+                    closeLanguageModal();
+                }
+            }
+        });
+
+        // 点击弹窗外部关闭
+        document.addEventListener('click', function(e) {
+            const modal = document.getElementById('language-modal');
+            if (e.target === modal) {
+                closeLanguageModal();
+            }
+        });
+
+        function confirmLanguageSelection() {
+             if (selectedLanguages.size > MAX_TARGET_LANGUAGES) {
+                 alert(`最多选择 ${MAX_TARGET_LANGUAGES} 个语言`);
+                 return;
+             }
+             state.targetLanguages = Array.from(selectedLanguages).slice(0, MAX_TARGET_LANGUAGES);
+             updateSelectedLanguagesDisplay();
+             closeLanguageModal();
+             validateLanguageSelection();
+         }
+
+         // 初始化默认目标语言
+         function initializeDefaultTargetLanguages() {
+             selectedLanguages.add('en');
+             state.targetLanguages = ['en'];
+             updateSelectedLanguagesDisplay();
+         }
+
+        function updateSelectedLanguagesDisplay() {
+            const display = document.getElementById('target-languages-btn');
+            if (selectedLanguages.size === 0) {
+                display.value = '选择目标语言';
+                display.style.color = '#9ca3af';
+            } else {
+                const languageNames = Array.from(selectedLanguages).map(code => TRANSLATION_LANGUAGES[code] || code);
+                display.value = `已选择: ${languageNames.join(', ')}`;
+                display.style.color = '#333';
+            }
+        }
+
+        // 翻译控制
+        async function startTranslation() {
+            if (state.isProcessing || !validateLanguageSelection()) return;
+            
+            // 清空字幕面板
+            clearSubtitleMessages();
+            
+            state.isProcessing = true;
+            const button = document.getElementById('translation_toggle');
+            const text = button.querySelector('.toggle-text');
+            
+            button.disabled = true;
+            text.textContent = '连接中...';
+            
+            try {
+                state.sourceLanguage = document.getElementById('source-language').value;
+                
+                const credentials = await apiRequest('/credentials', { agentId: 'default' });
+                const roomId = Math.floor(Math.random() * 10000000) + 1000000;
+                
+                const translationMode = parseInt(document.getElementById('translation-mode').value);
+                const hotwordInput = (document.getElementById('hotword-list')?.value || '').trim();
+                const vadInputRaw = document.getElementById('vad-silence-time')?.value;
+                const vadInput = parseInt(vadInputRaw, 10);
+                const vadSilenceTime = isNaN(vadInput) ? 1000 : Math.min(2000, Math.max(240, vadInput));
+                const vadLevelRaw = document.getElementById('vad-level')?.value;
+                const vadLevelParsed = parseInt(vadLevelRaw, 10);
+                const vadLevel = isNaN(vadLevelParsed) ? 2 : Math.min(3, Math.max(0, vadLevelParsed));
+                const semanticLevel = (document.getElementById('semantic-eagerness')?.value || 'off');
+
+                const transcriptionParams = {
+                    "UserId": credentials.robotId,
+                    "UserSig": credentials.robotSig,
+                    "TranscriptionMode": 0,
+                    "TargetUserId": credentials.userId
+                };
+
+                // 只有当语义断句不是"关闭"时才添加TurnDetection
+                if (semanticLevel !== 'off') {
+                    transcriptionParams.TurnDetection = {
+                        "SemanticEagerness": semanticLevel
+                    };
+                }
+
+                const requestBody = {
+                    "SdkAppId": credentials.sdkAppId,
+                    "RoomId": roomId.toString(),
+                    "TranscriptionParams": transcriptionParams,
+                    "RecognizeConfig": {
+                        "Language": "en",
+                        "AlternativeLanguage": [],
+                        "HotWordList": "TRTC|100,ABC|100",
+                        "VadSilenceTime": vadSilenceTime,
+                        "VadLevel": vadLevel
+                    },
+                    "TranslationConfig": {
+                        "Mode": translationMode,
+                        "TargetLanguages": state.targetLanguages,
+                        "TTSConfig": {
+                            "VoiceId": "chico_ex_rrun4xc1tqfcafot8n4ko", // "Chinese (Mandarin)_IntellectualGirl", // "chico_ex_rrun4xc1tqfcafot8n4ko", // "Chinese (Mandarin)_IntellectualGirl" , //"capi_sdk_test_clone_9dyfp2ld1vdvsa7byo6w7", //"female-kefu-xiaorui", // "capi_sdk_test_clone_8pfauo9xl2j1m9r4ccxtp", // "male-qn-badao", // "chico_ex_rrun4xc1tqfcafot8n4ko", //"capi_sdk_test_clone_8pfauo9xl2j1m9r4ccxtp" //"female-kefu-xiaomei", // "capi_sdk_test_clone_8pfauo9xl2j1m9r4ccxtp" // "Chinese (Mandarin)_IntellectualGirl" 
+                            "Model": "flow_01_ex",
+                             "Speed": 1.2,
+                            // // "Pitch": 1,
+                            // "Volume": 4.2,
+                        },
+                        // Chinese (Mandarin)_IntellectualGirl
+                        "Terminology": [                  // 自定义术语对，优先级高于通用翻译
+                            {"Source": "腾讯云", "Target": "Tencent Cloud Cloud"},
+                            {"Source": "TRTC", "Target": "Rocket Technical Committee"},
+                            {"Source": "ABC", "Target": "Rocket Technical Committee"},
+                        ],
+                    }
+                };
+                
+                const result = await apiRequest('/interpretation-v2', requestBody);
+                state.taskId = result.TaskId;
+                const { userInfo } = result;
+                
+                trtcState.currentUserId = userInfo.userId;
+                trtcState.botUserId = userInfo.robotId;
+                
+                await enterTRTCRoom({
+                    roomId: roomId,
+                    sdkAppId: credentials.sdkAppId,
+                    userId: credentials.userId,
+                    userSig: credentials.userSig
+                });
+                
+                setUIStatus('connection', '已连接');
+                updateStatus('room', 'RTC已连接');
+                
+                button.classList.add('active');
+                text.textContent = '停止翻译';
+                state.isActive = true;
+                document.getElementById('source-language').disabled = true;
+                document.getElementById('target-languages-btn').disabled = true;
+                
+            } catch (error) {
+                console.error('启动失败:', error);
+                setUIStatus('connection', '连接失败');
+                updateStatus('room', 'RTC连接失败');
+                alert(`启动失败: ${error.message}`);
+                text.textContent = '开始翻译';
+            } finally {
+                button.disabled = false;
+                state.isProcessing = false;
+            }
+        }
+
+        async function stopTranslation() {
+            if (state.isProcessing) return;
+            
+            state.isProcessing = true;
+            const button = document.getElementById('translation_toggle');
+            const text = button.querySelector('.toggle-text');
+            
+            button.disabled = true;
+            text.textContent = '停止中...';
+            
+            try {
+                if (state.taskId) {
+                    await apiRequest('/stop-transcription', { TaskId: state.taskId, agent: 'default' });
+                }
+                
+                await exitTRTCRoom();
+                
+                state.taskId = null;
+                setUIStatus('connection', '未连接');
+                setUIStatus('translation', '待机中');
+                updateStatus('room', 'RTC未连接');
+                
+                document.getElementById('subtitle-text-place').value = '';
+                document.getElementById('subtitles-display').innerHTML = 
+                    `<div class="subtitles-placeholder">选择识别语言和输出语言，然后点击开始翻译</div>`;
+                
+                document.getElementById('source-language').disabled = false;
+                document.getElementById('target-languages-btn').disabled = false;
+                validateLanguageSelection();
+                
+            } catch (error) {
+                console.error('停止失败:', error);
+                alert(`停止失败: ${error.message}`);
+            } finally {
+                button.classList.remove('active');
+                text.textContent = '开始翻译';
+                state.isActive = false;
+                button.disabled = false;
+                state.isProcessing = false;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadLanguageOptions();
+            initializeDefaultTargetLanguages();
+            
+            document.getElementById('source-language').addEventListener('change', validateLanguageSelection);
+            document.getElementById('target-languages-btn').addEventListener('click', openLanguageModal);
+            document.getElementById('translation_toggle').addEventListener('click', function() {
+                state.isActive ? stopTranslation() : startTranslation();
+            });
+            
+            // 初始化字幕显示
+            updateSubtitleDisplay();
+
+            updateUI();
+            updateSubtitles();
+            validateLanguageSelection();
+        });
+    </script>
+</body>
+</html>
