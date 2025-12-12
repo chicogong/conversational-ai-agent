@@ -892,7 +892,7 @@
         // 识别语言配置
         const RECOGNITION_LANGUAGES = {
             "16k_zh_en_caption": "中英caption",
-            "en": "英语",
+            "16k_en_caption": "英语",
             "zh": "中文",
             "ja": "日语",
             "zh-yue": "中国粤语",
@@ -950,7 +950,7 @@
 
         // 语言标志映射
         const LANGUAGE_FLAGS = {
-            'en': '🇺🇸', 'zh': '🇨🇳', 'zh-yue': '🇨🇳', 'ja': '🇯🇵', 'ko': '🇰🇷',
+            '16k_en_caption': '🇺🇸', 'zh': '🇨🇳', 'zh-yue': '🇨🇳', 'ja': '🇯🇵', 'ko': '🇰🇷',
             'vi': '🇻🇳', 'id': '🇮🇩', 'th': '🇹🇭', 'pt': '🇵🇹', 'tr': '🇹🇷',
             'ar': '🇸🇦', 'es': '🇪🇸', 'hi': '🇮🇳', 'fr': '🇫🇷', 'ms': '🇲🇾',
             'fil': '🇵🇭', 'de': '🇩🇪', 'it': '🇮🇹', 'ru': '🇷🇺', 'sv': '🇸🇪',
@@ -1365,9 +1365,9 @@
                     "RoomId": roomId.toString(),
                     "TranscriptionParams": transcriptionParams,
                     "RecognizeConfig": {
-                        "Language": state.sourceLanguage,
+                        "Language": "en",
                         "AlternativeLanguage": [],
-                        "HotWordList": hotwordInput,
+                        "HotWordList": "TRTC|100,ABC|100",
                         "VadSilenceTime": vadSilenceTime,
                         "VadLevel": vadLevel
                     },
@@ -1375,8 +1375,18 @@
                         "Mode": translationMode,
                         "TargetLanguages": state.targetLanguages,
                         "TTSConfig": {
-                            "VoiceId": document.getElementById('voice-type').value || "Chinese (Mandarin)_IntellectualGirl"
-                        }
+                            "VoiceId": "chico_ex_rrun4xc1tqfcafot8n4ko", // "Chinese (Mandarin)_IntellectualGirl", // "chico_ex_rrun4xc1tqfcafot8n4ko", // "Chinese (Mandarin)_IntellectualGirl" , //"capi_sdk_test_clone_9dyfp2ld1vdvsa7byo6w7", //"female-kefu-xiaorui", // "capi_sdk_test_clone_8pfauo9xl2j1m9r4ccxtp", // "male-qn-badao", // "chico_ex_rrun4xc1tqfcafot8n4ko", //"capi_sdk_test_clone_8pfauo9xl2j1m9r4ccxtp" //"female-kefu-xiaomei", // "capi_sdk_test_clone_8pfauo9xl2j1m9r4ccxtp" // "Chinese (Mandarin)_IntellectualGirl" 
+                            "Model": "flow_01_ex",
+                             "Speed": 1.2,
+                            // // "Pitch": 1,
+                            // "Volume": 4.2,
+                        },
+                        // Chinese (Mandarin)_IntellectualGirl
+                        "Terminology": [                  // 自定义术语对，优先级高于通用翻译
+                            {"Source": "腾讯云", "Target": "Tencent Cloud Cloud"},
+                            {"Source": "TRTC", "Target": "Rocket Technical Committee"},
+                            {"Source": "ABC", "Target": "Rocket Technical Committee"},
+                        ],
                     }
                 };
                 
