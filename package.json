@@ -16,7 +16,7 @@
     "@types/cors": "^2.8.17",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
-    "express": "^5.1.0",
+    "express": "^5.2.1",
     "morgan": "^1.10.0",
     "openai": "^5.1.1",
     "tencentcloud-sdk-nodejs-trtc": "^4.1.123",
