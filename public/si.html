@@ -557,6 +557,13 @@
         const state = { taskId: null, sourceLanguage: '', targetLanguage: '', isActive: false, isProcessing: false };
         let lastSubtitle = '';
 
+        // HTML 转义函数，防止 XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
         // 基础回调函数
         function addMessage(sender, text, type, roundid, end, translationLang = null) {
             const element = document.getElementById('subtitle-text-place');
@@ -625,9 +632,9 @@
                     });
                     
                     if (original && translated) {
-                        display.innerHTML = `<div class="subtitle-original">${original}</div><div class="subtitle-translated">${translated}</div>`;
+                        display.innerHTML = `<div class="subtitle-original">${escapeHtml(original)}</div><div class="subtitle-translated">${escapeHtml(translated)}</div>`;
                     } else if (translated || original) {
-                        display.innerHTML = `<div class="subtitle-translated">${translated || original}</div>`;
+                        display.innerHTML = `<div class="subtitle-translated">${escapeHtml(translated || original)}</div>`;
                     }
                 } else {
                     display.innerHTML = `<div class="subtitles-placeholder">等待语音输入...</div>`;
