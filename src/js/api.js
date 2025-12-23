@@ -5,7 +5,7 @@
 const API_ENDPOINTS = {
   GET_CREDENTIALS: '/credentials',
   START_CONVERSATION: '/conversations',
-  STOP_CONVERSATION: '/conversations'
+  STOP_CONVERSATION: '/conversations',
 };
 
 /**
@@ -15,14 +15,14 @@ const API_ENDPOINTS = {
  * @param {string} [method="POST"] - HTTP method to use
  * @returns {Promise<Object>} API response
  */
-async function apiRequest(endpoint, data, method = "POST") {
+async function apiRequest(endpoint, data, method = 'POST') {
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: method,
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
-      body: typeof data === 'string' ? data : JSON.stringify(data)
+      body: typeof data === 'string' ? data : JSON.stringify(data),
     });
 
     if (!response.ok) {
@@ -46,7 +46,7 @@ async function getUserInfo(agentId) {
   if (!agentId) {
     throw new Error('Agent ID is required');
   }
-  
+
   const userInfo = await apiRequest(API_ENDPOINTS.GET_CREDENTIALS, { agentId });
   console.log('User info retrieved successfully');
   return userInfo;
@@ -61,14 +61,14 @@ async function initChatConfig(agentId) {
   if (!agentId) {
     throw new Error('Agent ID is required for chat configuration');
   }
-  
+
   // Get user info from server with the specified agent
   const userInfo = await getUserInfo(agentId);
-  
+
   // Add agent info to ensure it's passed in the conversation request
   userInfo.agent = agentId;
   console.log('Chat config initialized with agent:', agentId);
-  
+
   return { userInfo };
 }
 
@@ -88,5 +88,5 @@ async function startAIConversation(data) {
  * @returns {Promise<Object>} The API response
  */
 async function stopAIConversation(data) {
-  return apiRequest(API_ENDPOINTS.STOP_CONVERSATION, data, "DELETE");
-} 
+  return apiRequest(API_ENDPOINTS.STOP_CONVERSATION, data, 'DELETE');
+}

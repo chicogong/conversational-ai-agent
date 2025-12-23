@@ -9,30 +9,30 @@
   --color-text-secondary: #555;
   --color-text-muted: #777;
   --color-text-light: #888;
-  
+
   /* Brand colors */
-  --color-primary: #4B85C3;
-  --color-primary-light: #EFF8FF;
+  --color-primary: #4b85c3;
+  --color-primary-light: #eff8ff;
   --color-primary-border: rgba(75, 133, 195, 0.25);
   --color-primary-border-hover: rgba(75, 133, 195, 0.6);
-  
+
   /* State colors */
-  --color-success: #4CAF50;
-  --color-warning: #E67E22;
-  --color-danger: #C77;
-  --color-danger-light: #FFF2F2;
-  --color-warning-light: #FFF7ED;
-  --color-info: #6A5ACD;
+  --color-success: #4caf50;
+  --color-warning: #e67e22;
+  --color-danger: #c77;
+  --color-danger-light: #fff2f2;
+  --color-warning-light: #fff7ed;
+  --color-info: #6a5acd;
   --color-info-light: #f5f5ff;
-  
+
   /* Chat colors */
-  --color-user-bubble: #EFF8FF;
-  --color-user-text: #4B85C3;
-  --color-user-indicator: #2196F3;
-  --color-ai-bubble: #F8F8F8;
+  --color-user-bubble: #eff8ff;
+  --color-user-text: #4b85c3;
+  --color-user-indicator: #2196f3;
+  --color-ai-bubble: #f8f8f8;
   --color-ai-text: #555;
-  --color-ai-indicator: #4CAF50;
-  
+  --color-ai-indicator: #4caf50;
+
   /* UI Elements */
   --border-radius-sm: 4px;
   --border-radius-md: 8px;
@@ -40,20 +40,20 @@
   --border-radius-xl: 16px;
   --border-radius-full: 20px;
   --border-radius-circle: 50%;
-  
+
   /* Shadow */
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
   --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.08);
-  
+
   /* Spacing */
   --spacing-xs: 5px;
   --spacing-sm: 10px;
   --spacing-md: 15px;
   --spacing-lg: 20px;
-  
+
   /* Border */
   --border-thin: 1px;
-  
+
   /* Transitions */
   --transition-fast: 0.15s ease;
   --transition-normal: 0.25s ease;
@@ -91,7 +91,7 @@ body {
 }
 
 .app-title:after {
-  content: "";
+  content: '';
   display: block;
   width: 40px;
   height: 3px;
@@ -196,12 +196,18 @@ body {
 
 /* Loading animation for the select box */
 @keyframes selectPulse {
-  0% { box-shadow: 0 0 0 rgba(75, 133, 195, 0.1); }
-  50% { box-shadow: 0 0 10px rgba(75, 133, 195, 0.3); }
-  100% { box-shadow: 0 0 0 rgba(75, 133, 195, 0.1); }
+  0% {
+    box-shadow: 0 0 0 rgba(75, 133, 195, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 10px rgba(75, 133, 195, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 0 rgba(75, 133, 195, 0.1);
+  }
 }
 
-.agent-select[data-loading="true"] {
+.agent-select[data-loading='true'] {
   animation: selectPulse 1.5s infinite;
 }
 
@@ -324,7 +330,7 @@ body {
 }
 
 .chat-id:before {
-  content: "";
+  content: '';
   display: inline-block;
   width: 6px;
   height: 6px;
@@ -420,13 +426,13 @@ button {
 }
 
 .mute-button:before {
-  content: "🔊";
+  content: '🔊';
   margin-right: var(--spacing-xs);
   font-size: 14px;
 }
 
 .mute-button.muted:before {
-  content: "🔇";
+  content: '🔇';
 }
 
 button:hover {
@@ -525,23 +531,36 @@ button:disabled {
 
 /* Loading animation for the select box */
 @keyframes selectPulse {
-  0% { box-shadow: 0 0 0 rgba(75, 133, 195, 0.1); }
-  50% { box-shadow: 0 0 10px rgba(75, 133, 195, 0.3); }
-  100% { box-shadow: 0 0 0 rgba(75, 133, 195, 0.1); }
+  0% {
+    box-shadow: 0 0 0 rgba(75, 133, 195, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 10px rgba(75, 133, 195, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 0 rgba(75, 133, 195, 0.1);
+  }
 }
 
-.agent-select[data-loading="true"] {
+.agent-select[data-loading='true'] {
   animation: selectPulse 1.5s infinite;
 }
 
 /* Volume bar animations */
 @keyframes gradientShift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
-#userVolumeBar, #aiVolumeBar {
+#userVolumeBar,
+#aiVolumeBar {
   background-size: 200% 100%;
   animation: gradientShift 3s ease infinite;
 }
@@ -709,13 +728,13 @@ button:disabled {
   .agent-selection-container {
     padding: 6px 0;
   }
-  
+
   .agent-select {
     width: 120px;
     padding: 4px 6px;
     font-size: 12px;
   }
-  
+
   .agent-nav-btn {
     width: 24px;
     height: 24px;
@@ -751,13 +770,13 @@ button:disabled {
   .agent-selection-container {
     padding: 4px 0;
   }
-  
+
   .agent-select {
     width: 100px;
     padding: 3px 4px;
     font-size: 11px;
   }
-  
+
   .agent-nav-btn {
     width: 22px;
     height: 22px;
@@ -765,4 +784,4 @@ button:disabled {
     flex: 0 0 auto;
     min-width: 22px;
   }
-} 
+}

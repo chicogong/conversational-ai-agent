@@ -38,7 +38,7 @@
 
 .share-btn {
   padding: 0 16px;
-  background-color: #2196F3;
+  background-color: #2196f3;
   color: white;
   border: none;
   border-radius: 0;
@@ -52,7 +52,7 @@
 }
 
 .share-btn:hover {
-  background-color: #1976D2;
+  background-color: #1976d2;
 }
 
 .copy-btn:hover {
@@ -84,7 +84,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 10px 15px;
-  background-color: var(--color-primary, #4B85C3);
+  background-color: var(--color-primary, #4b85c3);
   color: white;
   border-bottom: 1px solid var(--color-primary-border, rgba(75, 133, 195, 0.25));
 }
@@ -193,7 +193,7 @@
 
 .copy-btn {
   padding: 0 15px;
-  background-color: var(--color-primary, #4B85C3);
+  background-color: var(--color-primary, #4b85c3);
   color: white;
   border: none;
   cursor: pointer;
@@ -210,7 +210,7 @@
 }
 
 .copy-btn.copied {
-  background-color: var(--color-success, #4CAF50);
+  background-color: var(--color-success, #4caf50);
 }
 
 .invite-footer {
@@ -255,7 +255,7 @@
     max-width: 400px;
     margin: 0 auto;
   }
-  
+
   .invitation-panel.minimized {
     width: 150px;
     right: 10px;
@@ -266,10 +266,10 @@
 /* Order Summary Styles - Simplified */
 .order-summary {
   background-color: #f8f9fa;
-  border-left: 4px solid #4CAF50;
+  border-left: 4px solid #4caf50;
   padding: 12px;
   margin: 8px 0;
   border-radius: 4px;
   font-family: monospace;
   white-space: pre-line;
-} 
+}

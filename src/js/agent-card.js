@@ -37,16 +37,16 @@ const AgentCardBuilder = {
    */
   buildCardHTML(agentInfo) {
     if (!agentInfo) return '';
-    
+
     const {
       avatar = '/src/agent_cards/assets/default.png',
       name = 'AI Assistant',
       voiceType = 'Default Voice',
       description = 'No description available.',
       capabilities = [],
-      personality = ''
+      personality = '',
     } = agentInfo;
-    
+
     return `
       <div class="chat-agent-card">
         <div class="agent-header">
@@ -57,21 +57,29 @@ const AgentCardBuilder = {
           </div>
         </div>
         <div class="agent-description">${description}</div>
-        ${capabilities.length > 0 ? `
+        ${
+          capabilities.length > 0
+            ? `
           <div class="agent-capabilities">
             <div class="capabilities-title">I can help you:</div>
             <div class="capabilities-list">${this.buildCapabilitiesHTML(capabilities)}</div>
           </div>
-        ` : ''}
-        ${personality ? `
+        `
+            : ''
+        }
+        ${
+          personality
+            ? `
           <div class="agent-personality">
             <span class="personality-label">Personality：</span>
             <span class="personality-text">${personality}</span>
           </div>
-        ` : ''}
+        `
+            : ''
+        }
       </div>
     `;
-  }
+  },
 };
 
 /**
@@ -91,7 +99,7 @@ function displayAgentCard(agentInfo) {
   }
 
   const cardContent = AgentCardBuilder.buildCardHTML(agentInfo);
-  
+
   if (typeof addSystemMessage === 'function') {
     addSystemMessage(cardContent, true);
   } else {
@@ -111,26 +119,26 @@ function updateAgentCard(agentInfo) {
 
   // Create agent card HTML
   const cardHTML = AgentCardBuilder.buildCardHTML(agentInfo);
-  
+
   // Get the chat list element
   const chatList = document.querySelector('.chat-list');
   if (!chatList) {
     console.error('Chat list element not found');
     return;
   }
-  
+
   // Create the card element
   const cardElement = document.createElement('div');
   cardElement.className = 'chat-item ai';
   cardElement.innerHTML = cardHTML;
-  
+
   // Remove any existing agent cards
   const existingCards = chatList.querySelectorAll('.chat-agent-card');
-  existingCards.forEach(card => {
+  existingCards.forEach((card) => {
     const parentItem = card.closest('.chat-item');
     if (parentItem) parentItem.remove();
   });
-  
+
   // Add the new card at the top of the chat list
   chatList.insertBefore(cardElement, chatList.firstChild);
 }
@@ -151,4 +159,4 @@ async function initializeAgentCard() {
 
 // Initialize the agent card when the DOM is loaded
 document.addEventListener('DOMContentLoaded', initializeAgentCard);
-*/ 
+*/

@@ -2,7 +2,7 @@ const express = require('express');
 const path = require('path');
 const morgan = require('morgan');
 const cors = require('cors');
-const tencentcloud = require("tencentcloud-sdk-nodejs-trtc");
+const tencentcloud = require('tencentcloud-sdk-nodejs-trtc');
 const TLSSigAPIv2 = require('tls-sig-api-v2');
 const agentConfig = require('./src/agent_cards');
 const { sendReq } = require('./capi');
@@ -13,7 +13,9 @@ const TrtcClient = tencentcloud.trtc.v20190722.Client;
 // Check for available agent configurations
 const availableAgents = Object.keys(agentConfig);
 if (availableAgents.length === 0) {
-  console.error("No agent configurations found in agent_cards. Server might not function correctly.");
+  console.error(
+    'No agent configurations found in agent_cards. Server might not function correctly.'
+  );
   process.exit(1);
 }
 
@@ -30,13 +32,17 @@ app.use('/src', express.static(path.join(__dirname, 'src'), { maxAge: '1m', etag
  * @returns {Object} New TRTC client instance
  */
 function createClientForAgent(agentId) {
-  if (!agentConfig[agentId] || !agentConfig[agentId].CONFIG || !agentConfig[agentId].CONFIG.apiConfig) {
+  if (
+    !agentConfig[agentId] ||
+    !agentConfig[agentId].CONFIG ||
+    !agentConfig[agentId].CONFIG.apiConfig
+  ) {
     throw new Error(`Invalid configuration for agent: ${agentId}`);
   }
-  
+
   const { apiConfig } = agentConfig[agentId].CONFIG;
   console.log(`Creating new TRTC client with config from agent: ${agentId}`);
-  
+
   return new TrtcClient({
     credential: {
       secretId: apiConfig.secretId,
@@ -66,7 +72,7 @@ function formatAgentInfo(agentName, agentCardConfig) {
     description: agentCard.description || 'No description available.',
     capabilities: Array.isArray(agentCard.capabilities) ? agentCard.capabilities : [],
     voiceType: agentCard.voiceType || 'Default Voice',
-    personality: agentCard.personality || 'Helpful and friendly'
+    personality: agentCard.personality || 'Helpful and friendly',
   };
 }
 
@@ -77,43 +83,51 @@ function formatAgentInfo(agentName, agentCardConfig) {
 app.post('/conversations', (req, res) => {
   try {
     const { userInfo } = req.body || {};
-    
-    if (!userInfo || !userInfo.sdkAppId || !userInfo.roomId || !userInfo.robotId || 
-        !userInfo.robotSig || !userInfo.userId || !userInfo.agent) {
-      return res.status(400).json({ 
+
+    if (
+      !userInfo ||
+      !userInfo.sdkAppId ||
+      !userInfo.roomId ||
+      !userInfo.robotId ||
+      !userInfo.robotSig ||
+      !userInfo.userId ||
+      !userInfo.agent
+    ) {
+      return res.status(400).json({
         error: 'Missing required fields in userInfo',
-        required: ['sdkAppId', 'roomId', 'robotId', 'robotSig', 'userId', 'agent']
+        required: ['sdkAppId', 'roomId', 'robotId', 'robotSig', 'userId', 'agent'],
       });
     }
-    
+
     const selectedConfig = agentConfig[userInfo.agent]?.CONFIG;
     if (!selectedConfig) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: `Agent configuration not found for: ${userInfo.agent}`,
-        availableAgents: Object.keys(agentConfig)
+        availableAgents: Object.keys(agentConfig),
       });
     }
-    
+
     const client = createClientForAgent(userInfo.agent);
 
     const params = {
-      "SdkAppId": userInfo.sdkAppId,
-      "RoomId": userInfo.roomId.toString(),
-      "AgentConfig": {
-        "UserId": userInfo.robotId,
-        "UserSig": userInfo.robotSig,
-        "TargetUserId": userInfo.userId,
-        ...selectedConfig.AgentConfig
+      SdkAppId: userInfo.sdkAppId,
+      RoomId: userInfo.roomId.toString(),
+      AgentConfig: {
+        UserId: userInfo.robotId,
+        UserSig: userInfo.robotSig,
+        TargetUserId: userInfo.userId,
+        ...selectedConfig.AgentConfig,
       },
-      "STTConfig": selectedConfig.STTConfig,
-      "LLMConfig": JSON.stringify(selectedConfig.LLMConfig),
-      "TTSConfig": JSON.stringify(selectedConfig.TTSConfig),
-      "ExperimentalParams": JSON.stringify(selectedConfig.ExperimentalParams)
+      STTConfig: selectedConfig.STTConfig,
+      LLMConfig: JSON.stringify(selectedConfig.LLMConfig),
+      TTSConfig: JSON.stringify(selectedConfig.TTSConfig),
+      ExperimentalParams: JSON.stringify(selectedConfig.ExperimentalParams),
     };
 
-    client.StartAIConversation(params)
-      .then(data => res.json(data))
-      .catch(err => {
+    client
+      .StartAIConversation(params)
+      .then((data) => res.json(data))
+      .catch((err) => {
         console.error('Failed to start AI conversation', err);
         return res.status(500).json({ error: err.message });
       });
@@ -130,30 +144,32 @@ app.post('/conversations', (req, res) => {
 app.delete('/conversations', (req, res) => {
   try {
     const { TaskId, agent } = req.body;
-    
+
     if (!TaskId) {
       return res.status(400).json({ error: 'Missing required TaskId field' });
     }
-    
+
     if (agent && agentConfig[agent]) {
       const client = createClientForAgent(agent);
-      return client.StopAIConversation({ TaskId })
-        .then(data => res.json(data))
-        .catch(err => {
+      return client
+        .StopAIConversation({ TaskId })
+        .then((data) => res.json(data))
+        .catch((err) => {
           console.error('Failed to stop AI conversation', err);
           return res.status(500).json({ error: err.message });
         });
     }
-    
+
     const firstAgentId = availableAgents[0];
     if (!firstAgentId) {
-      throw new Error("No agent configuration available for initializing client");
+      throw new Error('No agent configuration available for initializing client');
     }
-    
+
     const client = createClientForAgent(firstAgentId);
-    client.StopAIConversation({ TaskId })
-      .then(data => res.json(data))
-      .catch(err => {
+    client
+      .StopAIConversation({ TaskId })
+      .then((data) => res.json(data))
+      .catch((err) => {
         console.error('Failed to stop AI conversation', err);
         return res.status(500).json({ error: err.message });
       });
@@ -170,35 +186,35 @@ app.delete('/conversations', (req, res) => {
 app.post('/credentials', (req, res) => {
   try {
     const { agentId } = req.body;
-    
+
     if (!agentId) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Missing agentId in request body',
-        availableAgents: Object.keys(agentConfig)
+        availableAgents: Object.keys(agentConfig),
       });
     }
-    
+
     if (!agentConfig[agentId]) {
       throw new Error(`Agent configuration not found for: ${agentId}`);
     }
-    
+
     const config = agentConfig[agentId].CONFIG;
     if (!config.apiConfig) {
       throw new Error(`Invalid API configuration for agent: ${agentId}`);
     }
-    
+
     const { sdkAppId, secretKey, expireTime } = config.trtcConfig;
     const randomNum = Math.floor(100000 + Math.random() * 900000).toString();
     const userId = `user_${randomNum}`;
     const robotId = `ai_${randomNum}`;
     const roomId = parseInt(randomNum);
-    
+
     const api = new TLSSigAPIv2.Api(sdkAppId, secretKey);
     const userSig = api.genSig(userId, expireTime);
     const robotSig = api.genSig(robotId, expireTime);
-    
+
     const credentials = { sdkAppId, userSig, robotSig, userId, robotId, roomId };
-    
+
     res.json(credentials);
   } catch (error) {
     console.error('Failed to generate user information', error);
@@ -214,13 +230,13 @@ app.get('/agents', (req, res) => {
   try {
     const agentNames = Object.keys(agentConfig);
     const agentsInfo = {};
-    
-    agentNames.forEach(agentName => {
+
+    agentNames.forEach((agentName) => {
       const agentConfig_ = agentConfig[agentName];
       const agentCard = agentConfig_.CONFIG.AgentCard || {};
       agentsInfo[agentName] = formatAgentInfo(agentName, agentCard);
     });
-    
+
     res.json({ agents: agentsInfo });
   } catch (error) {
     console.error('Error getting all agents info', error);
@@ -235,19 +251,19 @@ app.get('/agents', (req, res) => {
 app.get('/agents/:agentId', (req, res) => {
   try {
     const agentName = req.params.agentId;
-    
+
     if (!agentConfig[agentName]) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         error: `Agent '${agentName}' not found`,
-        availableAgents: Object.keys(agentConfig)
+        availableAgents: Object.keys(agentConfig),
       });
     }
-    
+
     const agentCard = agentConfig[agentName].CONFIG.AgentCard;
     if (!agentCard) {
       throw new Error(`Agent card configuration missing for ${agentName}`);
     }
-    
+
     res.json(formatAgentInfo(agentName, agentCard));
   } catch (error) {
     console.error('Error getting agent information', error);
@@ -264,10 +280,10 @@ app.get('/agents/:agentId', (req, res) => {
 app.post('/callbacks', (req, res) => {
   try {
     const sdkAppId = req.headers.sdkappid;
-    console.log('Received server callback:', { 
-      time: new Date().toLocaleString(), 
-      sdkAppId, 
-      body: req.body 
+    console.log('Received server callback:', {
+      time: new Date().toLocaleString(),
+      sdkAppId,
+      body: req.body,
     });
     res.json({ code: 0 });
   } catch (error) {
@@ -286,14 +302,14 @@ app.post('/transcription', async (req, res) => {
     if (!TaskId || !Array.isArray(TargetUserIdList) || TargetUserIdList.length === 0) {
       return res.status(400).json({
         error: 'Missing required fields',
-        required: ['TaskId', 'TargetUserIdList']
+        required: ['TaskId', 'TargetUserIdList'],
       });
     }
-    
+
     // 获取配置信息
     let config;
     let agentId = agent;
-    
+
     if (agentId && agentConfig[agentId]) {
       config = agentConfig[agentId].CONFIG.apiConfig;
       console.log(`Using API config from agent: ${agentId}`);
@@ -305,39 +321,46 @@ app.post('/transcription', async (req, res) => {
       config = agentConfig[agentId].CONFIG.apiConfig;
       console.log(`Agent not specified or invalid. Using default agent: ${agentId}`);
     }
-    
+
     if (!config || !config.secretId || !config.secretKey || !config.endpoint) {
       throw new Error(`Invalid API configuration for agent: ${agentId}`);
     }
-    
+
     // 准备请求参数
     const params = {
       TaskId,
-      TargetUserIdList
+      TargetUserIdList,
     };
-    
+
     // 将参数转换为 JSON 字符串
     const payload = JSON.stringify(params);
-    
+
     // 发送请求
     const apiConfig = {
       secretId: config.secretId,
       secretKey: config.secretKey,
-      host: config.endpoint
+      host: config.endpoint,
     };
-    
-    console.log(`Sending ModifyAITranscription request for TaskId: ${TaskId}, Users: ${TargetUserIdList.join(',')}`);
-    const data = await sendReq(payload, 'UpdateAITranscription', apiConfig, config.region || 'ap-guangzhou');
-    
+
+    console.log(
+      `Sending ModifyAITranscription request for TaskId: ${TaskId}, Users: ${TargetUserIdList.join(',')}`
+    );
+    const data = await sendReq(
+      payload,
+      'UpdateAITranscription',
+      apiConfig,
+      config.region || 'ap-guangzhou'
+    );
+
     // 检查响应中是否有错误
     if (data.Response && data.Response.Error) {
       console.error('API returned error:', data.Response.Error);
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: data.Response.Error.Message,
-        code: data.Response.Error.Code
+        code: data.Response.Error.Code,
       });
     }
-    
+
     console.log('Successfully updated transcription targets');
     res.json(data.Response || data);
   } catch (error) {
@@ -353,38 +376,38 @@ app.post('/transcription', async (req, res) => {
 app.post('/order-summary', async (req, res) => {
   try {
     const { conversation, agentId } = req.body;
-    
+
     if (!conversation || !Array.isArray(conversation)) {
-      return res.status(400).json({ 
-        error: 'Missing conversation data' 
+      return res.status(400).json({
+        error: 'Missing conversation data',
       });
     }
-    
+
     // Get LLM configuration
     const selectedConfig = agentConfig[agentId || 'take_order']?.CONFIG;
     if (!selectedConfig?.LLMConfig) {
-      return res.status(400).json({ 
-        error: `LLM configuration not found for agent: ${agentId}` 
+      return res.status(400).json({
+        error: `LLM configuration not found for agent: ${agentId}`,
       });
     }
-    
+
     const llmConfig = selectedConfig.LLMConfig;
-    
+
     // Initialize OpenAI client
     const openai = new OpenAI({
       apiKey: llmConfig.APIKey,
-      baseURL: llmConfig.APIUrl.replace('chat/completions', '')
+      baseURL: llmConfig.APIUrl.replace('chat/completions', ''),
     });
-    
+
     // Format conversation
     const conversationText = conversation
-      .filter(msg => msg.content?.trim())
-      .map(msg => `${msg.type === 'ai' ? 'AI助手' : '客户'}: ${msg.content}`)
+      .filter((msg) => msg.content?.trim())
+      .map((msg) => `${msg.type === 'ai' ? 'AI助手' : '客户'}: ${msg.content}`)
       .join('\n');
-    
+
     // Generate prompt based on agent type
     const isOrderAgent = agentId === 'take_order';
-    const summaryPrompt = isOrderAgent 
+    const summaryPrompt = isOrderAgent
       ? `分析咖啡点单对话，提取订单信息：
 
 对话内容：
@@ -419,17 +442,16 @@ ${conversationText}
     const completion = await openai.chat.completions.create({
       model: llmConfig.Model,
       messages: [
-        { role: "system", content: "你是一个专业的对话分析助手。" },
-        { role: "user", content: summaryPrompt }
+        { role: 'system', content: '你是一个专业的对话分析助手。' },
+        { role: 'user', content: summaryPrompt },
       ],
       temperature: 0.3,
-      max_tokens: 500
+      max_tokens: 500,
     });
 
     const summary = completion.choices[0]?.message?.content?.trim() || '总结生成失败';
     console.log(`Order summary prompt: ${summaryPrompt}\n summary generated: ${summary}`);
     res.json({ success: true, summary });
-
   } catch (error) {
     console.error('Error in order summary:', error);
     res.status(500).json({ error: error.message });
@@ -440,34 +462,34 @@ ${conversationText}
 app.post('/start-transcription', async (req, res) => {
   try {
     const { SdkAppId, RoomId, TranscriptionParams, RecognizeConfig, agent } = req.body;
-    
+
     if (!SdkAppId || !RoomId || !TranscriptionParams) {
-      return res.status(400).json({ 
-        error: 'Missing required fields: SdkAppId, RoomId, TranscriptionParams'
+      return res.status(400).json({
+        error: 'Missing required fields: SdkAppId, RoomId, TranscriptionParams',
       });
     }
-    
+
     const agentId = agent && agentConfig[agent] ? agent : availableAgents[0];
     if (!agentId) {
       throw new Error('No agent configuration available');
     }
-    
+
     const client = createClientForAgent(agentId);
-    
+
     const params = {
       SdkAppId,
       RoomId: RoomId.toString(),
-      TranscriptionParams
+      TranscriptionParams,
     };
-    
+
     if (RecognizeConfig) {
       params.RecognizeConfig = RecognizeConfig;
     }
-    
+
     console.log('🎙️ Starting transcription:', { SdkAppId, RoomId, agentId });
-    
+
     const data = await client.StartAITranscription(params);
-    
+
     res.json({
       ...data,
       userInfo: {
@@ -475,8 +497,8 @@ app.post('/start-transcription', async (req, res) => {
         roomId: RoomId,
         userId: TranscriptionParams.UserId,
         robotId: TranscriptionParams.UserId,
-        agent: agentId
-      }
+        agent: agentId,
+      },
     });
   } catch (error) {
     console.error('❌ Transcription start failed:', error.message);
@@ -488,24 +510,24 @@ app.post('/start-transcription', async (req, res) => {
 app.post('/stop-transcription', async (req, res) => {
   try {
     const { TaskId, agent } = req.body;
-    
+
     if (!TaskId) {
-      return res.status(400).json({ 
-        error: 'Missing required field: TaskId'
+      return res.status(400).json({
+        error: 'Missing required field: TaskId',
       });
     }
-    
+
     const agentId = agent && agentConfig[agent] ? agent : availableAgents[0];
     if (!agentId) {
       throw new Error('No agent configuration available');
     }
-    
+
     const client = createClientForAgent(agentId);
-    
+
     console.log('🛑 Stopping transcription:', { TaskId, agentId });
-    
+
     const data = await client.StopAITranscription({ TaskId });
-    
+
     console.log('✅ Transcription stopped successfully');
     res.json(data);
   } catch (error) {
@@ -521,24 +543,24 @@ app.post('/stop-transcription', async (req, res) => {
 app.post('/interpretation-v2', async (req, res) => {
   try {
     const { agent, ...requestData } = req.body;
-    
+
     // Validate required parameters
     if (!requestData.SdkAppId || !requestData.RoomId) {
       return res.status(400).json({ error: 'Missing required parameters' });
     }
-    
+
     const agentId = agent && agentConfig[agent] ? agent : availableAgents[0];
     if (!agentId) {
       throw new Error('No agent configuration available');
     }
-    
+
     const client = createClientForAgent(agentId);
-    
+
     console.log('Starting AI Transcription with request:', JSON.stringify(requestData, null, 2));
-    
+
     const result = await client.StartAITranscription(requestData);
     console.log('AI Transcription started successfully:', JSON.stringify(result, null, 2));
-    
+
     res.json({
       TaskId: result.TaskId,
       userInfo: {
@@ -547,7 +569,7 @@ app.post('/interpretation-v2', async (req, res) => {
         userId: requestData.TranscriptionParams?.UserId,
         userSig: requestData.TranscriptionParams?.UserSig,
         robotId: requestData.TranscriptionParams?.TargetUserId,
-      }
+      },
     });
   } catch (error) {
     console.error('Error starting transcription:', error);
@@ -560,48 +582,85 @@ app.post('/interpretation-v2', async (req, res) => {
  */
 app.post('/interpretation1', (req, res) => {
   try {
-    const { sdkAppId, roomId, userId, userSig, robotId, robotSig, agentConfig: clientAgentConfig, sttConfig, llmConfig, ttsConfig, experimentalParams } = req.body || {};
-    
+    const {
+      sdkAppId,
+      roomId,
+      userId,
+      userSig,
+      robotId,
+      robotSig,
+      agentConfig: clientAgentConfig,
+      sttConfig,
+      llmConfig,
+      ttsConfig,
+      experimentalParams,
+    } = req.body || {};
+
     // Basic validation for required fields
-    if (!sdkAppId || !roomId || !userId || !userSig || !robotId || !robotSig || !clientAgentConfig || !sttConfig || !llmConfig || !ttsConfig || !experimentalParams) {
-      return res.status(400).json({ 
+    if (
+      !sdkAppId ||
+      !roomId ||
+      !userId ||
+      !userSig ||
+      !robotId ||
+      !robotSig ||
+      !clientAgentConfig ||
+      !sttConfig ||
+      !llmConfig ||
+      !ttsConfig ||
+      !experimentalParams
+    ) {
+      return res.status(400).json({
         error: 'Missing required fields',
-        required: ['sdkAppId', 'roomId', 'userId', 'userSig', 'robotId', 'robotSig', 'agentConfig', 'sttConfig', 'llmConfig', 'ttsConfig', 'experimentalParams']
+        required: [
+          'sdkAppId',
+          'roomId',
+          'userId',
+          'userSig',
+          'robotId',
+          'robotSig',
+          'agentConfig',
+          'sttConfig',
+          'llmConfig',
+          'ttsConfig',
+          'experimentalParams',
+        ],
       });
     }
-    
+
     // Use default client - get first available agent for client creation
     const availableAgentIds = Object.keys(agentConfig);
     const defaultAgentId = availableAgentIds[0];
-    
+
     if (!defaultAgentId) {
-      return res.status(500).json({ 
-        error: 'No agent configuration available for client creation' 
+      return res.status(500).json({
+        error: 'No agent configuration available for client creation',
       });
     }
-    
+
     const client = createClientForAgent(defaultAgentId);
-    
+
     // Prepare API parameters - direct forwarding from frontend
     const params = {
-      "SdkAppId": sdkAppId,
-      "RoomId": roomId.toString(),
-      "AgentConfig": {
-        "UserId": robotId,
-        "UserSig": robotSig,
-        "TargetUserId": userId,
-        ...clientAgentConfig
+      SdkAppId: sdkAppId,
+      RoomId: roomId.toString(),
+      AgentConfig: {
+        UserId: robotId,
+        UserSig: robotSig,
+        TargetUserId: userId,
+        ...clientAgentConfig,
       },
-      "STTConfig": sttConfig,
-      "LLMConfig": JSON.stringify(llmConfig),
-      "TTSConfig": JSON.stringify(ttsConfig),
-      "ExperimentalParams": JSON.stringify(experimentalParams)
+      STTConfig: sttConfig,
+      LLMConfig: JSON.stringify(llmConfig),
+      TTSConfig: JSON.stringify(ttsConfig),
+      ExperimentalParams: JSON.stringify(experimentalParams),
     };
-    
+
     console.log('Forwarding interpretation request to API');
-    
-    client.StartAIConversation(params)
-      .then(data => {
+
+    client
+      .StartAIConversation(params)
+      .then((data) => {
         res.json({
           ...data,
           userInfo: {
@@ -611,11 +670,11 @@ app.post('/interpretation1', (req, res) => {
             userSig: userSig,
             robotId: robotId,
             robotSig: robotSig,
-            agent: 'simultaneous_interpreter'
-          }
+            agent: 'simultaneous_interpreter',
+          },
         });
       })
-      .catch(err => {
+      .catch((err) => {
         console.error('Failed to start AI conversation', err);
         return res.status(500).json({ error: err.message });
       });
@@ -633,7 +692,7 @@ const trtcConfig = {
   endpoint: process.env.TENCENT_ENDPOINT || 'trtc.tencentcloudapi.com',
   sdkAppId: parseInt(process.env.TRTC_SDK_APP_ID || '0'),
   sdkSecretKey: process.env.TRTC_SECRET_KEY, // 用于生成UserSig
-  expireTime: 86400
+  expireTime: 86400,
 };
 
 /**
@@ -644,9 +703,9 @@ function createTrtcClient() {
   if (!trtcConfig.secretId || !trtcConfig.secretKey) {
     throw new Error('TRTC configuration missing. Please set environment variables.');
   }
-  
+
   console.log('Creating new TRTC client');
-  
+
   return new TrtcClient({
     credential: {
       secretId: trtcConfig.secretId,
@@ -661,7 +720,6 @@ function createTrtcClient() {
   });
 }
 
-
 /**
  * Start simultaneous interpretation using transcription API
  * POST /interpretation
@@ -669,21 +727,21 @@ function createTrtcClient() {
 app.post('/interpretation', async (req, res) => {
   try {
     const { ...requestData } = req.body;
-    
+
     // Validate required parameters
     if (!requestData.SdkAppId || !requestData.RoomId) {
-      return res.status(400).json({ 
-        error: 'Missing required parameters: SdkAppId, RoomId' 
+      return res.status(400).json({
+        error: 'Missing required parameters: SdkAppId, RoomId',
       });
     }
-    
+
     const client = createTrtcClient();
-    
+
     console.log('🌐 Starting simultaneous interpretation:', JSON.stringify(requestData, null, 2));
-    
+
     const result = await client.StartAITranscription(requestData);
     console.log('✅ Simultaneous interpretation started:', JSON.stringify(result, null, 2));
-    
+
     res.json({
       TaskId: result.TaskId,
       userInfo: {
@@ -691,8 +749,8 @@ app.post('/interpretation', async (req, res) => {
         roomId: requestData.RoomId,
         userId: requestData.TranscriptionParams?.UserId,
         userSig: requestData.TranscriptionParams?.UserSig,
-        robotId: requestData.TranscriptionParams?.TargetUserId
-      }
+        robotId: requestData.TranscriptionParams?.TargetUserId,
+      },
     });
   } catch (error) {
     console.error('❌ Error starting interpretation:', error);
@@ -707,19 +765,19 @@ app.post('/interpretation', async (req, res) => {
 app.delete('/interpretation', async (req, res) => {
   try {
     const { TaskId } = req.body;
-    
+
     if (!TaskId) {
-      return res.status(400).json({ 
-        error: 'Missing required field: TaskId'
+      return res.status(400).json({
+        error: 'Missing required field: TaskId',
       });
     }
-    
+
     const client = createTrtcClient();
-    
+
     console.log('🛑 Stopping interpretation:', { TaskId });
-    
+
     const data = await client.StopAITranscription({ TaskId });
-    
+
     console.log('✅ Interpretation stopped successfully');
     res.json(data);
   } catch (error) {
@@ -727,7 +785,6 @@ app.delete('/interpretation', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
 
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '127.0.0.1';

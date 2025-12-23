@@ -1,55 +1,55 @@
 module.exports = {
-    CONFIG: {
-        // Tencent Cloud API client configuration
-        apiConfig: {
-            secretId: process.env.TENCENT_SECRET_ID,
-            secretKey: process.env.TENCENT_SECRET_KEY,
-            region: process.env.TENCENT_REGION || "ap-guangzhou",
-            endpoint: process.env.TENCENT_ENDPOINT || "trtc.tencentcloudapi.com"
-        },
-    
-        // TRTC configuration
-        trtcConfig: {
-            sdkAppId: parseInt(process.env.TRTC_SDK_APP_ID),
-            secretKey: process.env.TRTC_SECRET_KEY,
-            expireTime: 10 * 60 * 60
-        },
-    
-        // Agent card information
-        AgentCard: {
-            name: "妲己",
-            avatar: "/src/agent_cards/assets/daji2.png",
-            description: "王者荣耀助手妲己，多人聊天室中只要呼唤她的名字，就会出现解答游戏问题",
-            capabilities: ["游戏攻略", "英雄技巧", "装备推荐", "多人聊天"],
-            voiceType: "魅惑声音",
-            personality: "魅惑、聪明、机智、善解人意"
-        },
-    
-        // Agent configuration
-        AgentConfig: {
-            WelcomeMessage: "妾身妲己，王者荣耀游戏助手，有任何游戏问题请直接呼唤妲己",
-            InterruptMode: 0,
-            TurnDetectionMode: 0,
-            InterruptSpeechDuration: 600
-        },
-    
-        // Speech recognition configuration
-        STTConfig: {
-            Language: "16k_zh_large",
-            VadSilenceTime: 600,
-            HotWordList: "妲己|100,妲己|11,小妲己|100,小妲己|11"
-        },
-    
-        // LLM configuration
-        LLMConfig: {
-            LLMType: "openai",
-            Model: process.env.LLM_MODEL,
-            APIUrl: process.env.LLM_API_URL,
-            APIKey: process.env.LLM_API_KEY,
-            History: 4,
-            Timeout: 3,
-            Streaming: true,
-            SystemPrompt: `
+  CONFIG: {
+    // Tencent Cloud API client configuration
+    apiConfig: {
+      secretId: process.env.TENCENT_SECRET_ID,
+      secretKey: process.env.TENCENT_SECRET_KEY,
+      region: process.env.TENCENT_REGION || 'ap-guangzhou',
+      endpoint: process.env.TENCENT_ENDPOINT || 'trtc.tencentcloudapi.com',
+    },
+
+    // TRTC configuration
+    trtcConfig: {
+      sdkAppId: parseInt(process.env.TRTC_SDK_APP_ID),
+      secretKey: process.env.TRTC_SECRET_KEY,
+      expireTime: 10 * 60 * 60,
+    },
+
+    // Agent card information
+    AgentCard: {
+      name: '妲己',
+      avatar: '/src/agent_cards/assets/daji2.png',
+      description: '王者荣耀助手妲己，多人聊天室中只要呼唤她的名字，就会出现解答游戏问题',
+      capabilities: ['游戏攻略', '英雄技巧', '装备推荐', '多人聊天'],
+      voiceType: '魅惑声音',
+      personality: '魅惑、聪明、机智、善解人意',
+    },
+
+    // Agent configuration
+    AgentConfig: {
+      WelcomeMessage: '妾身妲己，王者荣耀游戏助手，有任何游戏问题请直接呼唤妲己',
+      InterruptMode: 0,
+      TurnDetectionMode: 0,
+      InterruptSpeechDuration: 600,
+    },
+
+    // Speech recognition configuration
+    STTConfig: {
+      Language: '16k_zh_large',
+      VadSilenceTime: 600,
+      HotWordList: '妲己|100,妲己|11,小妲己|100,小妲己|11',
+    },
+
+    // LLM configuration
+    LLMConfig: {
+      LLMType: 'openai',
+      Model: process.env.LLM_MODEL,
+      APIUrl: process.env.LLM_API_URL,
+      APIKey: process.env.LLM_API_KEY,
+      History: 4,
+      Timeout: 3,
+      Streaming: true,
+      SystemPrompt: `
                 # 基础人设
                     - 昵称：妲己，小妲己
                     - 角色：王者荣耀游戏助手，以妲己形象出现
@@ -72,27 +72,27 @@ module.exports = {
                       - 排位与匹配系统
                     - 对于非游戏问题，可以礼貌回应但引导回游戏话题
             `,
-        },
-    
-        // Text-to-speech configuration
-        TTSConfig: {
-            TTSType: "minimax",
-            GroupId: process.env.MINIMAX_TTS_GROUP_ID,
-            APIKey: process.env.MINIMAX_TTS_API_KEY,
-            VoiceType: process.env.MINIMAX_TTS_VOICE_TYPE,
-            APIUrl: process.env.MINIMAX_TTS_API_URL || "http://api.minimax.chat/v1/t2a_v2",
-            Model: process.env.MINIMAX_TTS_MODEL || "speech-01-turbo",
-            Speed: 1
-        },
-        
-        // Experimental parameters
-        ExperimentalParams: {
-            multi_conversation: {
-                target_user_list: ["user_id_1", "user_id_2"],
-            },
-            intent_recognition: {
-                temperature: 0.1,
-                system_prompt: `
+    },
+
+    // Text-to-speech configuration
+    TTSConfig: {
+      TTSType: 'minimax',
+      GroupId: process.env.MINIMAX_TTS_GROUP_ID,
+      APIKey: process.env.MINIMAX_TTS_API_KEY,
+      VoiceType: process.env.MINIMAX_TTS_VOICE_TYPE,
+      APIUrl: process.env.MINIMAX_TTS_API_URL || 'http://api.minimax.chat/v1/t2a_v2',
+      Model: process.env.MINIMAX_TTS_MODEL || 'speech-01-turbo',
+      Speed: 1,
+    },
+
+    // Experimental parameters
+    ExperimentalParams: {
+      multi_conversation: {
+        target_user_list: ['user_id_1', 'user_id_2'],
+      },
+      intent_recognition: {
+        temperature: 0.1,
+        system_prompt: `
                 你是一个意图识别助手，负责判断用户是否想与“小妲己”（王者荣耀助手）对话。
 
                 判断规则：
@@ -130,7 +130,7 @@ module.exports = {
                 只要当前输入提到“小妲己”，始终返回“是”，即使是闲聊、问候
 
                 返回结果必须是唯一的“是”或“否”，不包含任何其他内容（如标点、解释、换行）`,
-            },
-        }
-    }
-}; 
+      },
+    },
+  },
+};

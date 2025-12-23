@@ -6,13 +6,13 @@
 const trtcState = {
   client: null,
   currentUserId: null,
-  botUserId: null
+  botUserId: null,
 };
 
 // TRTC configuration constants
 const TRTC_CONFIG = {
   CMD_ID: 2, // Fixed cmdId as per requirement
-  VOLUME_EVALUATION_INTERVAL: 50 // 50ms for smoother visualization
+  VOLUME_EVALUATION_INTERVAL: 50, // 50ms for smoother visualization
 };
 
 /**
@@ -41,23 +41,23 @@ async function enterTRTCRoom(params) {
   const client = initTRTCClient();
   await client.enterRoom({
     roomId: parseInt(params.roomId),
-    scene: "rtc",
+    scene: 'rtc',
     sdkAppId: params.sdkAppId,
     userId: params.userId,
     userSig: params.userSig,
   });
-  
+
   // Set up event handlers
   client.on(TRTC.EVENT.CUSTOM_MESSAGE, handleTRTCMessage);
   client.on(TRTC.EVENT.AUDIO_VOLUME, handleAudioVolume);
-  
+
   // Enable audio volume evaluation with higher frequency for smoother visualization
   client.enableAudioVolumeEvaluation(TRTC_CONFIG.VOLUME_EVALUATION_INTERVAL);
-  
+
   // Start audio
   await client.startLocalAudio();
   console.log('Local audio started successfully');
-  
+
   return client;
 }
 
@@ -86,13 +86,13 @@ async function generateOrderSummary(agentId = 'take_order') {
   try {
     // Get current conversation messages
     const conversationData = getConversationMessages();
-    
+
     // Use API module for consistency
     const result = await apiRequest('/order-summary', {
       conversation: conversationData,
-      agentId: agentId
+      agentId: agentId,
     });
-    
+
     if (result.success && result.summary) {
       addSystemMessage(`📋 订单总结:\n${result.summary}`);
     } else {
@@ -136,7 +136,7 @@ function setUserIds(userId, aiUserId) {
  */
 async function toggleMute(mute) {
   if (!trtcState.client) return false;
-  
+
   try {
     await trtcState.client.updateLocalAudio({ mute: mute });
     console.log(`Local audio ${mute ? 'muted' : 'unmuted'} successfully`);
@@ -167,8 +167,8 @@ function createMessagePayload(type, payloadData) {
     payload: {
       id: Date.now().toString(),
       timestamp: Date.now(),
-      ...payloadData
-    }
+      ...payloadData,
+    },
   };
 }
 
@@ -179,15 +179,15 @@ function createMessagePayload(type, payloadData) {
  */
 function sendTRTCMessage(payload) {
   if (!trtcState.client) return false;
-  
+
   try {
     trtcState.client.sendCustomMessage({
       cmdId: TRTC_CONFIG.CMD_ID,
-      data: new TextEncoder().encode(JSON.stringify(payload)).buffer
+      data: new TextEncoder().encode(JSON.stringify(payload)).buffer,
     });
     return true;
   } catch (error) {
-    console.error("Failed to send TRTC message:", error);
+    console.error('Failed to send TRTC message:', error);
     return false;
   }
 }
@@ -199,12 +199,12 @@ function sendTRTCMessage(payload) {
  */
 function sendCustomTextMessage(message) {
   if (!trtcState.client || !message.trim()) return false;
-  
+
   const messageText = message.trim();
   const payload = createMessagePayload(MESSAGE_TYPES.CUSTOM_TEXT, {
-    message: messageText
+    message: messageText,
   });
-  
+
   const success = sendTRTCMessage(payload);
   if (success) {
     console.log('Custom text message sent');
@@ -218,9 +218,9 @@ function sendCustomTextMessage(message) {
  */
 function sendInterruptSignal() {
   if (!trtcState.client) return false;
-  
+
   const payload = createMessagePayload(MESSAGE_TYPES.CUSTOM_INTERRUPT, {});
-  
+
   const success = sendTRTCMessage(payload);
   if (success) {
     console.log('Interrupt signal sent');
@@ -247,7 +247,7 @@ function handleTRTCMessage(event) {
       [MESSAGE_TYPES.CONVERSATION]: handleConversationMessage,
       [MESSAGE_TYPES.STATE_CHANGE]: handleStateChangeMessage,
       [MESSAGE_TYPES.ERROR_CALLBACK]: handleErrorCallbackMessage,
-      [MESSAGE_TYPES.METRICS_CALLBACK]: handleMetricsMessage
+      [MESSAGE_TYPES.METRICS_CALLBACK]: handleMetricsMessage,
     };
 
     const handler = handlers[data.type];
@@ -270,13 +270,7 @@ function handleConversationMessage(data) {
   const { text, roundid, end } = payload;
   const isRobot = sender.includes('ai_');
 
-  addMessage(
-    sender, 
-    text, 
-    isRobot ? 'ai' : 'user',
-    roundid,
-    end
-  );
+  addMessage(sender, text, isRobot ? 'ai' : 'user', roundid, end);
 }
 
 /**
@@ -285,7 +279,7 @@ function handleConversationMessage(data) {
  */
 function handleStateChangeMessage(data) {
   const state = data.payload.state;
-  const stateText = STATE_LABELS[state] || "Unknown State";
+  const stateText = STATE_LABELS[state] || 'Unknown State';
   updateStatus('ai', stateText);
 }
 
@@ -299,7 +293,7 @@ function handleErrorCallbackMessage(data) {
     const { metric, tag } = payload;
     const { roundid, code, message: errorMessage } = tag;
     console.error(`AI Service Error: ${metric} (${code}): ${errorMessage}`);
-    
+
     const displayMessage = `${metric} (${code}): ${errorMessage}`;
     addSystemMessage(displayMessage);
   } catch (error) {
@@ -340,21 +334,21 @@ function handleAudioVolume(event) {
   event.result.forEach(({ userId, volume }) => {
     // Check if this is the local user (empty userId means local microphone)
     const isLocalUser = userId === '';
-    
+
     if (isLocalUser) {
       // Apply smoothing to volume transitions
-      const smoothedVolume = (volume * (1 - smoothingFactor)) + (prevUserVolume * smoothingFactor);
+      const smoothedVolume = volume * (1 - smoothingFactor) + prevUserVolume * smoothingFactor;
       prevUserVolume = smoothedVolume;
-      
+
       // Update the user's volume bar
       updateVolumeBar('userVolumeBar', smoothedVolume);
-    } 
+    }
     // Check if this is the AI bot
     else if (userId === trtcState.botUserId) {
       // Apply smoothing to volume transitions
-      const smoothedVolume = (volume * (1 - smoothingFactor)) + (prevAiVolume * smoothingFactor);
+      const smoothedVolume = volume * (1 - smoothingFactor) + prevAiVolume * smoothingFactor;
       prevAiVolume = smoothedVolume;
-      
+
       // Update the AI's volume bar
       updateVolumeBar('aiVolumeBar', smoothedVolume);
     }
@@ -377,16 +371,16 @@ function updateVolumeBar(elementId, volume) {
       scaledVolume = 8;
     } else if (volume < 20) {
       // For low volumes, enhanced scaling
-      scaledVolume = 8 + (volume * 1.5);
+      scaledVolume = 8 + volume * 1.5;
     } else {
       // For medium to high volumes, standard scaling
       scaledVolume = Math.min(volume * 2.5, 100);
     }
-    
+
     // Use smooth transition for all changes
     volumeBar.style.transition = 'width 0.12s cubic-bezier(0.4, 0, 0.2, 1)';
     volumeBar.style.width = `${scaledVolume}%`;
-    
+
     // Add animation class when volume is above threshold
     if (volume > 5) {
       volumeBar.classList.add('active');

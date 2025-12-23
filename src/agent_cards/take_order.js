@@ -1,56 +1,57 @@
 module.exports = {
-    CONFIG: {
-        // Tencent Cloud API client configuration
-        apiConfig: {
-            secretId: process.env.TENCENT_SECRET_ID,
-            secretKey: process.env.TENCENT_SECRET_KEY,
-            region: process.env.TENCENT_REGION || "ap-beijing",
-            endpoint: process.env.TENCENT_ENDPOINT || "trtc.tencentcloudapi.com"
-        },
-    
-        // TRTC configuration
-        trtcConfig: {
-            sdkAppId: parseInt(process.env.TRTC_SDK_APP_ID),
-            secretKey: process.env.TRTC_SECRET_KEY,
-            expireTime: 10 * 60 * 60  // User signature 10 hours expiration time (seconds)
-        },
-    
-        // Agent card information
-        AgentCard: {
-            name: "咖啡点单助手",
-            avatar: "/src/agent_cards/assets/aaa.png",
-            description: "专业的咖啡店点单助手，帮助您选择合适的咖啡并完成订单",
-            capabilities: ["咖啡点单", "饮品推荐", "订单确认"],
-            voiceType: "客服女声",
-            personality: "专业、友好、耐心、善于推荐"
-        },
-    
-        // Agent configuration
-        AgentConfig: {
-            WelcomeMessage: "您好！欢迎来到我们的咖啡店，我是您的点单助手。今天想要来点什么咖啡呢？",
-            InterruptMode: 2,
-            TurnDetectionMode: 3,
-            InterruptSpeechDuration: 200,
-            WelcomeMessagePriority: 1
-        },
-    
-        // Speech recognition configuration
-        STTConfig: {
-            Language: "zh",
-            VadSilenceTime: 600,
-            HotWordList: "咖啡|11,拿铁|11,美式|11,卡布奇诺|11,摩卡|11,冰饮|11,热饮|11,大杯|11,中杯|11,小杯|11,加糖|10,不加糖|10"
-        },
-    
-        // LLM configuration
-        LLMConfig: {
-            LLMType: "openai",
-            Model: process.env.LLM_MODEL,
-            APIUrl: process.env.LLM_API_URL,
-            APIKey: process.env.LLM_API_KEY,
-            History: 5,
-            Timeout: 3,
-            Streaming: true,
-            SystemPrompt: `你是一个专业的咖啡店点单助手，负责为客户完成咖啡订单。请按照以下流程进行：
+  CONFIG: {
+    // Tencent Cloud API client configuration
+    apiConfig: {
+      secretId: process.env.TENCENT_SECRET_ID,
+      secretKey: process.env.TENCENT_SECRET_KEY,
+      region: process.env.TENCENT_REGION || 'ap-beijing',
+      endpoint: process.env.TENCENT_ENDPOINT || 'trtc.tencentcloudapi.com',
+    },
+
+    // TRTC configuration
+    trtcConfig: {
+      sdkAppId: parseInt(process.env.TRTC_SDK_APP_ID),
+      secretKey: process.env.TRTC_SECRET_KEY,
+      expireTime: 10 * 60 * 60, // User signature 10 hours expiration time (seconds)
+    },
+
+    // Agent card information
+    AgentCard: {
+      name: '咖啡点单助手',
+      avatar: '/src/agent_cards/assets/aaa.png',
+      description: '专业的咖啡店点单助手，帮助您选择合适的咖啡并完成订单',
+      capabilities: ['咖啡点单', '饮品推荐', '订单确认'],
+      voiceType: '客服女声',
+      personality: '专业、友好、耐心、善于推荐',
+    },
+
+    // Agent configuration
+    AgentConfig: {
+      WelcomeMessage: '您好！欢迎来到我们的咖啡店，我是您的点单助手。今天想要来点什么咖啡呢？',
+      InterruptMode: 2,
+      TurnDetectionMode: 3,
+      InterruptSpeechDuration: 200,
+      WelcomeMessagePriority: 1,
+    },
+
+    // Speech recognition configuration
+    STTConfig: {
+      Language: 'zh',
+      VadSilenceTime: 600,
+      HotWordList:
+        '咖啡|11,拿铁|11,美式|11,卡布奇诺|11,摩卡|11,冰饮|11,热饮|11,大杯|11,中杯|11,小杯|11,加糖|10,不加糖|10',
+    },
+
+    // LLM configuration
+    LLMConfig: {
+      LLMType: 'openai',
+      Model: process.env.LLM_MODEL,
+      APIUrl: process.env.LLM_API_URL,
+      APIKey: process.env.LLM_API_KEY,
+      History: 5,
+      Timeout: 3,
+      Streaming: true,
+      SystemPrompt: `你是一个专业的咖啡店点单助手，负责为客户完成咖啡订单。请按照以下流程进行：
 
                         ## 点单流程：
                         1. **欢迎并了解需求**
@@ -97,17 +98,17 @@ module.exports = {
                         - 天气冷：推荐热饮
 
                         请用中文与客户交流，保持专业和友好的语调。`,
-        },
-    
-        // Text-to-speech configuration
-        TTSConfig: {
-            TTSType: "minimax",
-            GroupId: process.env.MINIMAX_TTS_GROUP_ID,
-            APIKey: process.env.MINIMAX_TTS_API_KEY,
-            VoiceType: "kefu-herui3",
-            APIUrl: "http://api.minimax.chat/v1/t2a_v2",
-            Model: "speech-01-turbo",
-            Speed: 1
-        }
-    }
+    },
+
+    // Text-to-speech configuration
+    TTSConfig: {
+      TTSType: 'minimax',
+      GroupId: process.env.MINIMAX_TTS_GROUP_ID,
+      APIKey: process.env.MINIMAX_TTS_API_KEY,
+      VoiceType: 'kefu-herui3',
+      APIUrl: 'http://api.minimax.chat/v1/t2a_v2',
+      Model: 'speech-01-turbo',
+      Speed: 1,
+    },
+  },
 };

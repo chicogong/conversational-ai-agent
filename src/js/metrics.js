@@ -11,19 +11,19 @@ const METRICS_CONFIG = Object.freeze({
     'tts_network_latency',
     'tts_first_frame_latency',
     'tts_discontinuity',
-    'interruption'
+    'interruption',
   ],
   // Display labels for metrics in the UI
   DISPLAY_LABELS: {
     asr_latency: 'asr',
     llm_first_token: 'llm',
-    tts_first_frame_latency: 'tts '
+    tts_first_frame_latency: 'tts ',
     // Commented metrics are not displayed in the UI
     // llm_network_latency: 'llm_net',
     // tts_network_latency: 'tts_net',
     // tts_discontinuity: 'tts_dic',
     // interruption: 'interrupt'
-  }
+  },
 });
 
 // Metrics data storage
@@ -50,7 +50,7 @@ function recordMetric(metric, value, roundId) {
   if (metricsData.hasOwnProperty(metric)) {
     metricsData[metric].push({
       value,
-      roundId
+      roundId,
     });
     console.log(`Recorded metric: ${metric} = ${value}ms for round ${roundId}`);
   }
@@ -70,12 +70,12 @@ function resetMetrics() {
  */
 function calculateStatistics(values) {
   if (!values.length) return null;
-  
+
   return {
     count: values.length,
     avg: Math.round(values.reduce((a, b) => a + b, 0) / values.length),
     min: Math.min(...values),
-    max: Math.max(...values)
+    max: Math.max(...values),
   };
 }
 
@@ -86,35 +86,35 @@ function displayLatencyStatistics() {
   try {
     // Calculate statistics for each metric
     const statistics = {};
-    
-    Object.keys(metricsData).forEach(metric => {
-      const values = metricsData[metric].map(item => item.value);
+
+    Object.keys(metricsData).forEach((metric) => {
+      const values = metricsData[metric].map((item) => item.value);
       const stats = calculateStatistics(values);
       if (stats) {
         statistics[metric] = stats;
       }
     });
-    
+
     // If no metrics were recorded
     if (Object.keys(statistics).length === 0) {
-      addSystemMessage("No latency metrics recorded");
+      addSystemMessage('No latency metrics recorded');
       return;
     }
-    
+
     // Build the metrics table
-    let table = "metrics(ms):\n";
-    table += "🕹️  | avg | min | max | *\n";
-    
+    let table = 'metrics(ms):\n';
+    table += '🕹️  | avg | min | max | *\n';
+
     Object.entries(METRICS_CONFIG.DISPLAY_LABELS).forEach(([metric, label]) => {
       const stat = statistics[metric];
       if (stat) {
         table += `${label} | ${stat.avg} | ${stat.min} | ${stat.max} | ${stat.count}\n`;
       }
     });
-    
+
     // Add the summary to the chat
     addSystemMessage(table);
   } catch (error) {
     console.error('Error calculating metrics statistics:', error);
   }
-} 
+}
