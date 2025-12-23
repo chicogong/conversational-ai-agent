@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TRTC AI 同声传译助手</title>
+    <link rel="icon" href="src/agent_cards/assets/star.ico" type="image/x-icon">
+    <style type="text/css">
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px 15px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .main-container {
+            background: rgba(255,255,255);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 0;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .logo-header {
+            text-align: center;
+            padding: 25px 30px 15px;
+            border-bottom: 1px solid rgba(103, 126, 234, 0.1);
+            margin-bottom: 25px;
+        }
+
+        .logo-header img {
+            max-width: 200px;
+            max-height: 50px;
+            height: auto;
+            width: auto;
+            object-fit: contain;
+            opacity: 0.8;
+            transition: all 0.3s ease;
+        }
+
+        .logo-header img:hover {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+
+        .main-content {
+            padding: 0 30px 30px;
+        }
+
+        .footer-container {
+            text-align: center;
+            margin-top: 20px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 15px 20px;
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+
+        .footer-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255,255,255,0.9);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 10px 18px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .footer-link:hover {
+            background: rgba(255,255,255,0.25);
+            color: white;
+            transform: translateY(-1px);
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        .footer-text {
+            font-size: 12px;
+            color: rgba(255,255,255,0.7);
+            margin-top: 6px;
+            font-weight: 300;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(103, 126, 234, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(103, 126, 234, 0.2);
+            backdrop-filter: blur(5px);
+        }
+
+        .status-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+        }
+
+        .status-label {
+            font-size: 13px;
+            color: #667eea;
+            margin-bottom: 8px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .status-value {
+            font-size: 15px;
+            font-weight: 600;
+            padding: 10px 18px;
+            border-radius: 25px;
+            background: linear-gradient(135deg, #f8f9ff 0%, #e8f0ff 100%);
+            color: #667eea;
+            min-width: 110px;
+            text-align: center;
+            border: 2px solid rgba(103, 126, 234, 0.3);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 8px rgba(103, 126, 234, 0.15);
+        }
+
+        .status-value.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+            box-shadow: 0 4px 15px rgba(103, 126, 234, 0.4);
+        }
+
+        .volume-container {
+            flex: 2;
+            margin: 0 20px;
+        }
+
+        .volume-bar-container {
+            height: 14px;
+            background: rgba(248, 249, 255, 0.8);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 8px;
+            position: relative;
+            border: 2px solid rgba(103, 126, 234, 0.2);
+            backdrop-filter: blur(5px);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .volume-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #10b981 0%, #f59e0b 45%, #ef4444 85%, #dc2626 100%);
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 6px;
+            position: relative;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .volume-bar.active {
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+            animation: pulse 0.8s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.8; }
+            100% { opacity: 1; }
+        }
+
+        .subtitles-container {
+            background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+            border-radius: 16px;
+            padding: 35px;
+            margin-bottom: 25px;
+            min-height: 200px;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid rgba(103, 126, 234, 0.3);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+
+        .subtitles-content {
+            color: white;
+            line-height: 1.6;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 130px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+            gap: 16px;
+        }
+
+        .subtitle-original {
+            font-size: 18px;
+            color: #e2e8f0;
+            font-style: italic;
+            opacity: 0.85;
+            font-weight: 400;
+            letter-spacing: 0.3px;
+        }
+
+        .subtitle-translated {
+            font-size: 26px;
+            color: #ffffff;
+            font-weight: 600;
+            line-height: 1.4;
+            letter-spacing: 0.5px;
+        }
+
+        .subtitles-placeholder {
+            color: #a0aec0;
+            font-size: 18px;
+            font-style: italic;
+            opacity: 0.7;
+            font-weight: 300;
+        }
+
+        .controls-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .language-selector {
+            flex: 1;
+            min-width: 180px;
+        }
+
+        .language-selector select {
+            width: 100%;
+            padding: 12px 18px;
+            font-size: 15px;
+            border: 2px solid #e8f0ff;
+            border-radius: 12px;
+            background: white;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 12px center;
+            background-repeat: no-repeat;
+            background-size: 16px;
+        }
+
+        .language-selector select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .language-selector select:disabled {
+            background-color: #f3f4f6;
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .language-selector label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #667eea;
+            font-size: 14px;
+        }
+
+        .language-pair-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .language-error {
+            color: #ef4444;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .toggle-button {
+            flex: 1;
+            min-width: 120px;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            border-radius: 35px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+
+        .toggle-button:hover {
+            transform: translateY(-2px) scale(1.01);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+        }
+
+        .toggle-button:active {
+            transform: translateY(-1px) scale(1.01);
+            box-shadow: 0 3px 12px rgba(102, 126, 234, 0.5);
+        }
+
+        .toggle-button.active {
+            background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+            box-shadow: 0 4px 15px rgba(244, 67, 54, 0.4);
+        }
+
+        .toggle-button.active:hover {
+            background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+            box-shadow: 0 6px 20px rgba(244, 67, 54, 0.6);
+        }
+
+        .toggle-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+            box-shadow: 0 3px 10px rgba(156, 163, 175, 0.3);
+            transform: none;
+        }
+
+        .toggle-button:disabled:hover {
+            transform: none;
+            box-shadow: 0 3px 10px rgba(156, 163, 175, 0.3);
+            background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+        }
+
+        .toggle-text {
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+
+        @media screen and (max-width: 768px) {
+            body { padding: 10px; }
+            .main-content { padding: 0 20px 25px; }
+            .status-bar { flex-direction: column; gap: 15px; padding: 16px; }
+            .status-item { width: 100%; flex-direction: row; justify-content: space-between; align-items: center; }
+            .status-label { margin-bottom: 0; margin-right: 10px; }
+            .volume-container { margin: 0; width: 100%; flex-direction: column; }
+            .subtitles-container { padding: 25px 20px; min-height: 160px; }
+            .subtitles-content { min-height: 110px; gap: 12px; }
+            .subtitle-original { font-size: 16px; }
+            .subtitle-translated { font-size: 22px; }
+            .subtitles-placeholder { font-size: 16px; }
+            .controls-container { flex-direction: column; gap: 15px; }
+            .language-pair-container { gap: 10px; }
+            .language-selector { min-width: auto; }
+            .language-selector select { padding: 12px 16px; font-size: 15px; }
+            .toggle-button { min-width: 100%; padding: 12px 20px; font-size: 15px; border-radius: 35px; }
+        }
+    </style>
+</head>
+
+<body>
+    <div style="display: none;">
+        <input id="room_state" type="text" readonly value="RTC未连接"/>
+        <input id="robot_state" type="text" readonly value="Agent未激活"/>
+        <textarea id="subtitle-text-place" readonly></textarea>
+    </div>
+    <div class="main-container">
+        <div class="logo-header">
+            <img src="src/agent_cards/assets/logo_rtc.png" alt="Tencent RTC Logo" />
+        </div>
+        
+        <div class="main-content">
+            <div class="status-bar">
+                <div class="status-item">
+                    <div class="status-label">连接状态</div>
+                    <div id="connection-status" class="status-value">未连接</div>
+                </div>
+                <div class="volume-container">
+                    <div class="status-label">音量</div>
+                    <div class="volume-bar-container">
+                        <div id="volume-indicator" class="volume-bar"></div>
+                    </div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">翻译状态</div>
+                    <div id="translation-status" class="status-value">待机中</div>
+                </div>
+            </div>
+
+            <div class="subtitles-container">
+                <div id="subtitles-display" class="subtitles-content">
+                    <div class="subtitles-placeholder">选择识别语言和输出语言，然后点击开始翻译</div>
+                </div>
+            </div>
+
+            <div class="controls-container">
+                <div class="language-pair-container">
+                    <div class="language-selector">
+                        <label for="translation-mode">翻译模式</label>
+                        <select id="translation-mode">
+                            <option value="1">文字翻译</option>
+                            <option value="2" selected>语音同传</option>
+                        </select>
+                    </div>
+                    <div class="language-selector">
+                        <label for="source-language">识别语言</label>
+                        <select id="source-language">
+                            <option value="">请选择识别语言</option>
+                        </select>
+                    </div>
+                    <div class="language-selector">
+                        <label for="target-language">输出语言</label>
+                        <select id="target-language">
+                            <option value="">请选择输出语言</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="language-error" id="language-error">识别语言和输出语言不能相同</div>
+                <button id="translation_toggle" class="toggle-button">
+                    <span class="toggle-text">🎤 开始翻译</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-container">
+        <a href="https://trtc.io/solutions/conversational-ai" target="_blank" class="footer-link">
+            <span>🚀</span>
+            <span>了解更多 TRTC AI 对话解决方案</span>
+        </a>
+        <div class="footer-text">Powered by Tencent RTC</div>
+    </div>
+
+    <script src='https://web.sdk.qcloud.com/trtc/webrtc/v5/dist/trtc.js'></script>
+    
+    <script>
+        // 基础配置
+        const API_BASE_URL = window.location.origin;
+        const MESSAGE_TYPES = { CONVERSATION: 10000, STATE_CHANGE: 10001, ERROR_CALLBACK: 10030, METRICS_CALLBACK: 10020 };
+        
+        // TRTC 状态
+        const trtcState = { client: null, currentUserId: null, botUserId: null };
+        let prevVolume = 0;
+
+        // API 请求
+        async function apiRequest(endpoint, data, method = "POST") {
+            const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                method: method,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            });
+            if (!response.ok) throw new Error(`API error: ${response.status}`);
+            return await response.json();
+        }
+
+        // TRTC 房间管理
+        async function enterTRTCRoom(params) {
+            const client = trtcState.client = TRTC.create();
+            await client.enterRoom({
+                roomId: parseInt(params.roomId),
+                scene: "rtc",
+                sdkAppId: params.sdkAppId,
+                userId: params.userId,
+                userSig: params.userSig,
+            });
+            
+            client.on(TRTC.EVENT.CUSTOM_MESSAGE, handleTRTCMessage);
+            client.on(TRTC.EVENT.AUDIO_VOLUME, handleAudioVolume);
+            client.enableAudioVolumeEvaluation(50);
+            await client.startLocalAudio();
+            return client;
+        }
+
+        async function exitTRTCRoom() {
+            if (trtcState.client) {
+                await trtcState.client.exitRoom();
+                trtcState.client.destroy();
+                trtcState.client = null;
+            }
+        }
+
+        // 消息处理
+        function handleTRTCMessage(event) {
+            try {
+                const data = JSON.parse(new TextDecoder().decode(event.data));
+                console.log('receive message:', JSON.stringify(data, null, 2));
+                
+                if (data.type === MESSAGE_TYPES.CONVERSATION) {
+                    const { sender, payload } = data;
+                    const isRobot = sender.includes('ai_');
+                    // 如果是AI消息且有translation_text字段，优先使用translation_text
+                    const displayText = isRobot && payload.translation_text ? payload.translation_text : payload.text;
+                    const translationLang = isRobot && payload.translation_language ? payload.translation_language : null;
+                    addMessage(sender, displayText, isRobot ? 'ai' : 'user', payload.roundid, payload.end, translationLang);
+                    updateSubtitles();
+                } 
+                else if (data.type === MESSAGE_TYPES.STATE_CHANGE) {
+                    console.log('State change:', data.payload);
+                    const stateMap = { 1: '聆听中', 2: '分析中', 3: '翻译中', 4: '已中断' };
+                    updateStatus('ai', stateMap[data.payload.state] || '未知状态');
+                }
+                else if (data.type === MESSAGE_TYPES.ERROR_CALLBACK) {
+                    console.error('AI Service Error:', data.payload);
+                }
+                else if (data.type === MESSAGE_TYPES.METRICS_CALLBACK) {
+                    console.log('Metrics:', data.payload);
+                }
+            } catch (error) {
+                console.error('TRTC message error:', error);
+            }
+        }
+
+        function handleAudioVolume(event) {
+            event.result.forEach(({ userId, volume }) => {
+                if (userId === '' || userId === trtcState.botUserId) {
+                    const smoothedVolume = (volume * 0.7) + (prevVolume * 0.3);
+                    prevVolume = smoothedVolume;
+                    updateVolumeBar(smoothedVolume);
+                }
+            });
+        }
+
+        function updateVolumeBar(volume) {
+            const volumeBar = document.getElementById('volume-indicator');
+            if (volumeBar) {
+                const scaledVolume = volume < 5 ? 8 : Math.min(volume * 2.5, 100);
+                volumeBar.style.width = `${scaledVolume}%`;
+                volumeBar.classList.toggle('active', volume > 5);
+            }
+        }
+
+        // 语言配置
+        const SUPPORTED_LANGUAGES = {
+            "16k_zh_en_caption": "16k_zh_en_caption", "zh": "中文（普通话）", "en": "英语", "zh-yue": "中国粤语", "vi": "越南语", "ja": "日语", "ko": "韩语",
+            "id": "印度尼西亚语", "th": "泰语", "pt": "葡萄牙语", "tr": "土耳其语", "ar": "阿拉伯语", "es": "西班牙语",
+            "hi": "印地语", "fr": "法语", "ms": "马来语", "fil": "菲律宾语", "de": "德语", "it": "意大利语",
+            "ru": "俄语", "sv": "瑞典语", "da": "丹麦语", "no": "挪威语"
+        };
+
+        // 应用状态
+        const state = { taskId: null, sourceLanguage: '', targetLanguage: '', isActive: false, isProcessing: false };
+        let lastSubtitle = '';
+
+        // HTML 转义函数，防止 XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 基础回调函数
+        function addMessage(sender, text, type, roundid, end, translationLang = null) {
+            const element = document.getElementById('subtitle-text-place');
+            if (element) {
+                const langInfo = translationLang ? `[${translationLang}]` : '';
+                element.value += `\n${sender}: ${text}${langInfo}`;
+            }
+        }
+
+        function updateStatus(target, status) {
+            const element = document.getElementById(target === 'ai' ? 'robot_state' : 'room_state');
+            if (element) element.value = status;
+            updateUI();
+        }
+
+        function setUIStatus(type, text) {
+            const element = document.getElementById(type === 'connection' ? 'connection-status' : 'translation-status');
+            if (element) {
+                element.textContent = text;
+                element.classList.toggle('active', text.includes('已连接') || text.includes('翻译中'));
+            }
+        }
+
+        // UI 更新
+        function updateUI() {
+            const roomState = document.getElementById('room_state')?.value || '';
+            const robotState = document.getElementById('robot_state')?.value || '';
+            
+            const connectionStatus = roomState.includes('已连接') ? '已连接' : '未连接';
+            const translationStatus = robotState.includes('聆听中') ? '聆听中' : 
+                                     robotState.includes('分析中') ? '分析中' : 
+                                     robotState.includes('翻译中') ? '翻译中' : 
+                                     robotState.includes('已中断') ? '已中断' : '待机中';
+            
+            setUIStatus('connection', connectionStatus);
+            setUIStatus('translation', translationStatus);
+        }
+
+        function updateSubtitles() {
+            const element = document.getElementById('subtitle-text-place');
+            const display = document.getElementById('subtitles-display');
+            const text = element?.value || '';
+            
+            if (text !== lastSubtitle && display) {
+                if (text.trim()) {
+                    const lines = text.split('\n').filter(l => l.trim());
+                    let original = '', translated = '';
+                    
+                    lines.forEach(line => {
+                        const colonIndex = line.indexOf(': ');
+                        if (colonIndex !== -1) {
+                            const sender = line.substring(0, colonIndex);
+                            const content = line.substring(colonIndex + 2);
+                            if (sender.startsWith('user_')) {
+                                original = content;
+                            } else if (sender.startsWith('ai_')) {
+                                // 检查是否有语言标识
+                                const langMatch = content.match(/^(.+?)\[([^\]]+)\]$/);
+                                if (langMatch) {
+                                    translated = `${langMatch[1]} <span style="font-size: 14px; color: #a0aec0; font-weight: 400;">(${langMatch[2]})</span>`;
+                                } else {
+                                    translated = content;
+                                }
+                            }
+                        }
+                    });
+                    
+                    if (original && translated) {
+                        display.innerHTML = `<div class="subtitle-original">${escapeHtml(original)}</div><div class="subtitle-translated">${escapeHtml(translated)}</div>`;
+                    } else if (translated || original) {
+                        display.innerHTML = `<div class="subtitle-translated">${escapeHtml(translated || original)}</div>`;
+                    }
+                } else {
+                    display.innerHTML = `<div class="subtitles-placeholder">等待语音输入...</div>`;
+                }
+                lastSubtitle = text;
+            }
+        }
+
+        // 语言选择
+        function validateLanguageSelection() {
+            const sourceLanguage = document.getElementById('source-language').value;
+            const targetLanguage = document.getElementById('target-language').value;
+            const errorDiv = document.getElementById('language-error');
+            const toggleButton = document.getElementById('translation_toggle');
+
+            const isValid = sourceLanguage && targetLanguage && sourceLanguage !== targetLanguage;
+            errorDiv.style.display = (sourceLanguage && targetLanguage && sourceLanguage === targetLanguage) ? 'block' : 'none';
+
+            toggleButton.disabled = !isValid;
+            return isValid;
+        }
+
+        function loadLanguageOptions() {
+            const sourceSelect = document.getElementById('source-language');
+            const targetSelect = document.getElementById('target-language');
+
+            sourceSelect.innerHTML = '<option value="">请选择识别语言</option>';
+            targetSelect.innerHTML = '<option value="">请选择输出语言</option>';
+
+            Object.entries(SUPPORTED_LANGUAGES).forEach(([code, name]) => {
+                sourceSelect.innerHTML += `<option value="${code}">${name}</option>`;
+                // 排除 16k_zh_en_caption 作为目标语言
+                if (code !== '16k_zh_en_caption') {
+                    targetSelect.innerHTML += `<option value="${code}">${name}</option>`;
+                }
+            });
+
+            // 设置默认值
+            sourceSelect.value = '16k_zh_en_caption';
+            targetSelect.value = 'en';
+        }
+
+
+        // 翻译控制
+        async function startTranslation() {
+            if (state.isProcessing || !validateLanguageSelection()) return;
+            
+            state.isProcessing = true;
+            const button = document.getElementById('translation_toggle');
+            const text = button.querySelector('.toggle-text');
+            
+            button.disabled = true;
+            text.textContent = '连接中...';
+            
+            try {
+                state.sourceLanguage = document.getElementById('source-language').value;
+                state.targetLanguage = document.getElementById('target-language').value;
+
+                const credentials = await apiRequest('/credentials', { agentId: 'default' });
+                const roomId = Math.floor(Math.random() * 10000000) + 1000000;
+
+                const translationMode = parseInt(document.getElementById('translation-mode').value);
+
+                const requestBody = {
+                    "SdkAppId": credentials.sdkAppId,
+                    "RoomId": roomId.toString(),
+                    "TranscriptionParams": {
+                        "UserId": credentials.robotId,
+                        "UserSig": credentials.robotSig,
+                        "TranscriptionMode": 0,
+                        "TargetUserId": credentials.userId,
+                        "TurnDetection": {
+                            "SemanticEagerness": "low"
+                        }
+                    },
+                    "RecognizeConfig": {
+                        "Language": state.sourceLanguage,
+                        "VadLevel": 2
+                    },
+                    "TranslationConfig": {
+                        "Mode": translationMode,
+                        "TargetLanguages": [state.targetLanguage],
+                        "TTSConfig": {
+                            "VoiceId": "chico_ex_rrun4xc1tqfcafot8n4ko",
+                            "Model": "flow_01_ex"
+                        }
+                    }
+                };
+                
+                const result = await apiRequest('/interpretation-v2', requestBody);
+                state.taskId = result.TaskId;
+                const { userInfo } = result;
+                
+                trtcState.currentUserId = userInfo.userId;
+                trtcState.botUserId = userInfo.robotId;
+                
+                await enterTRTCRoom({
+                    roomId: roomId,
+                    sdkAppId: credentials.sdkAppId,
+                    userId: credentials.userId,
+                    userSig: credentials.userSig
+                });
+                
+                setUIStatus('connection', '已连接');
+                updateStatus('room', 'RTC已连接');
+                
+                button.classList.add('active');
+                text.textContent = '停止翻译';
+                state.isActive = true;
+                document.getElementById('source-language').disabled = true;
+                document.getElementById('target-language').disabled = true;
+                
+            } catch (error) {
+                console.error('启动失败:', error);
+                setUIStatus('connection', '连接失败');
+                updateStatus('room', 'RTC连接失败');
+                alert(`启动失败: ${error.message}`);
+                text.textContent = '开始翻译';
+            } finally {
+                button.disabled = false;
+                state.isProcessing = false;
+            }
+        }
+
+        async function stopTranslation() {
+            if (state.isProcessing) return;
+            
+            state.isProcessing = true;
+            const button = document.getElementById('translation_toggle');
+            const text = button.querySelector('.toggle-text');
+            
+            button.disabled = true;
+            text.textContent = '停止中...';
+            
+            try {
+                if (state.taskId) {
+                    await apiRequest('/stop-transcription', { TaskId: state.taskId, agent: 'default' });
+                }
+                
+                await exitTRTCRoom();
+                
+                state.taskId = null;
+                setUIStatus('connection', '未连接');
+                setUIStatus('translation', '待机中');
+                updateStatus('room', 'RTC未连接');
+                
+                document.getElementById('subtitle-text-place').value = '';
+                document.getElementById('subtitles-display').innerHTML = 
+                    `<div class="subtitles-placeholder">选择识别语言和输出语言，然后点击开始翻译</div>`;
+                
+                document.getElementById('source-language').disabled = false;
+                document.getElementById('target-language').disabled = false;
+                validateLanguageSelection();
+                
+            } catch (error) {
+                console.error('停止失败:', error);
+                alert(`停止失败: ${error.message}`);
+            } finally {
+                button.classList.remove('active');
+                text.textContent = '开始翻译';
+                state.isActive = false;
+                button.disabled = false;
+                state.isProcessing = false;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadLanguageOptions();
+
+            document.getElementById('source-language').addEventListener('change', validateLanguageSelection);
+            document.getElementById('target-language').addEventListener('change', validateLanguageSelection);
+            document.getElementById('translation_toggle').addEventListener('click', function() {
+                state.isActive ? stopTranslation() : startTranslation();
+            });
+
+            updateUI();
+            updateSubtitles();
+            validateLanguageSelection();
+        });
+    </script>
+</body>
+</html>

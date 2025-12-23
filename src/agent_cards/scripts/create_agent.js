@@ -12,7 +12,7 @@ const COLORS = {
   green: '\x1b[32m',
   yellow: '\x1b[33m',
   blue: '\x1b[34m',
-  cyan: '\x1b[36m'
+  cyan: '\x1b[36m',
 };
 
 // Configuration templates
@@ -54,7 +54,7 @@ const TEMPLATES = {
     ttsModel: 'speech-01-turbo',
     ttsSpeed: 1,
     region: 'ap-beijing',
-    hotWords: '小助手|11,解闷|11'
+    hotWords: '小助手|11,解闷|11',
   },
   customer_service: {
     description: '专业的女性客服',
@@ -95,14 +95,14 @@ const TEMPLATES = {
     ttsModel: 'speech-01-turbo',
     ttsSpeed: 1.05,
     region: 'ap-beijing',
-    hotWords: '订单|10,退款|10,售后|9,发货|8,客服|8'
-  }
+    hotWords: '订单|10,退款|10,售后|9,发货|8,客服|8',
+  },
 };
 
 // Create a readline interface for user input
 const rl = readline.createInterface({
   input: process.stdin,
-  output: process.stdout
+  output: process.stdout,
 });
 
 // Function to prompt user for input with colors
@@ -122,20 +122,20 @@ async function promptWithValidation(question, defaultValue = '', validator = nul
       promptText += ` (默认: "${defaultValue}")`;
     }
     promptText += ': ';
-    
+
     const answer = await colorPrompt(promptText);
-    
+
     if (!answer && defaultValue) return defaultValue;
     if (!answer && validator) {
       console.log(COLORS.red + errorMsg + COLORS.reset);
       continue;
     }
-    
+
     if (validator && !validator(answer)) {
       console.log(COLORS.red + errorMsg + COLORS.reset);
       continue;
     }
-    
+
     return answer;
   }
 }
@@ -217,7 +217,7 @@ function generateAgentTemplate(config) {
 // Function to update index.js to include the new agent
 function updateIndexFile(agentId) {
   const indexPath = path.join(__dirname, '..', 'index.js');
-  
+
   try {
     if (!fs.existsSync(indexPath)) {
       // Create index.js if it doesn't exist
@@ -226,35 +226,37 @@ function updateIndexFile(agentId) {
       console.log(COLORS.green + `✅ 已创建 index.js 文件并添加助手: ${agentId}` + COLORS.reset);
       return;
     }
-    
+
     let indexContent = fs.readFileSync(indexPath, 'utf8');
-    
+
     // Check if the file already requires dotenv
-    if (!indexContent.includes('require(\'dotenv\')')) {
-      indexContent = 'require(\'dotenv\').config();\n\n' + indexContent;
+    if (!indexContent.includes("require('dotenv')")) {
+      indexContent = "require('dotenv').config();\n\n" + indexContent;
     }
-    
+
     // Extract the current module.exports object
     const moduleExportsMatch = indexContent.match(/module\.exports\s*=\s*\{([^}]*)\}/s);
-    
+
     if (moduleExportsMatch) {
       const existingExports = moduleExportsMatch[1].trim();
-      
+
       // Check if the agent is already in the exports
       if (!existingExports.includes(`${agentId}:`)) {
         // Add the new agent to the exports
-        const newExports = existingExports ? 
-          existingExports + `,\n    ${agentId}: require('./${agentId}')` :
-          `\n    ${agentId}: require('./${agentId}')`;
-        
+        const newExports = existingExports
+          ? existingExports + `,\n    ${agentId}: require('./${agentId}')`
+          : `\n    ${agentId}: require('./${agentId}')`;
+
         // Replace the old exports with the new ones
         const newIndexContent = indexContent.replace(
           /module\.exports\s*=\s*\{([^}]*)\}/s,
           `module.exports = {${newExports}\n}`
         );
-        
+
         fs.writeFileSync(indexPath, newIndexContent);
-        console.log(COLORS.green + `✅ 已更新 index.js 文件，添加新助手: ${agentId}` + COLORS.reset);
+        console.log(
+          COLORS.green + `✅ 已更新 index.js 文件，添加新助手: ${agentId}` + COLORS.reset
+        );
       } else {
         console.log(COLORS.yellow + `⚠️ 助手 ${agentId} 已存在于 index.js 文件中` + COLORS.reset);
       }
@@ -262,7 +264,9 @@ function updateIndexFile(agentId) {
       // If no module.exports format is found, append it
       const moduleAddition = `\nmodule.exports = {\n    ${agentId}: require('./${agentId}')\n};\n`;
       fs.writeFileSync(indexPath, indexContent + moduleAddition);
-      console.log(COLORS.green + `✅ 已添加 module.exports 到 index.js 并包含助手: ${agentId}` + COLORS.reset);
+      console.log(
+        COLORS.green + `✅ 已添加 module.exports 到 index.js 并包含助手: ${agentId}` + COLORS.reset
+      );
     }
   } catch (error) {
     console.error(COLORS.red + '❌ 更新 index.js 文件时出错:' + COLORS.reset, error.message);
@@ -280,12 +284,14 @@ async function runSetup() {
   console.log(COLORS.bright + COLORS.cyan + '=== TRTC AI Agent 创建工具 ===\n' + COLORS.reset);
   console.log('这个工具将帮助您创建一个新的AI助手配置。');
   console.log('在每一步中，按回车键使用默认值。\n');
-  console.log(COLORS.yellow + '注意: 环境变量需要在 .env 文件中单独配置，请参考 env.example\n' + COLORS.reset);
+  console.log(
+    COLORS.yellow + '注意: 环境变量需要在 .env 文件中单独配置，请参考 env.example\n' + COLORS.reset
+  );
 
   try {
     // List available templates
     console.log(COLORS.bright + '可用的配置模板:' + COLORS.reset);
-    Object.keys(TEMPLATES).forEach(template => {
+    Object.keys(TEMPLATES).forEach((template) => {
       console.log(`- ${template}: ${TEMPLATES[template].description}`);
     });
     console.log('');
@@ -331,24 +337,24 @@ async function runSetup() {
       // Use the template as baseline and override with user inputs
       ...templateBase,
       // Override welcome message with agent name
-      welcomeMessage: `您好，我是${agentName}。有什么可以帮您的吗？`
+      welcomeMessage: `您好，我是${agentName}。有什么可以帮您的吗？`,
     };
 
     console.log(COLORS.bright + '\n=== 基础信息 ===' + COLORS.reset);
     config.description = await promptWithValidation('请输入助手描述', config.description);
-    
+
     const capabilitiesStr = await promptWithValidation(
-      '请输入助手能力 (逗号分隔, 例如: "语音交互,问答服务")', 
+      '请输入助手能力 (逗号分隔, 例如: "语音交互,问答服务")',
       config.capabilities.join(',')
     );
-    config.capabilities = capabilitiesStr.split(',').map(cap => cap.trim());
-    
+    config.capabilities = capabilitiesStr.split(',').map((cap) => cap.trim());
+
     config.voiceType = await promptWithValidation('请输入语音类型描述', config.voiceType);
     config.personality = await promptWithValidation('请输入助手性格特点', config.personality);
-    
+
     console.log(COLORS.bright + '\n=== 交互设置 ===' + COLORS.reset);
     config.welcomeMessage = await promptWithValidation('请输入欢迎语', config.welcomeMessage);
-    
+
     const interruptModeInput = await promptWithValidation(
       '请输入打断模式 (1-3, 1:不可打断, 2:检测停顿时可打断, 3:随时可打断)',
       config.interruptMode.toString(),
@@ -356,14 +362,17 @@ async function runSetup() {
       '❌ 打断模式必须是 1, 2 或 3'
     );
     config.interruptMode = parseInt(interruptModeInput);
-    
+
     console.log(COLORS.bright + '\n=== 语音识别设置 ===' + COLORS.reset);
     config.language = await promptWithValidation('请输入语音识别语言模型', config.language);
-    config.hotWords = await promptWithValidation('请输入热词列表及权重 (例如: "AI|6,助手|8")', config.hotWords);
-    
+    config.hotWords = await promptWithValidation(
+      '请输入热词列表及权重 (例如: "AI|6,助手|8")',
+      config.hotWords
+    );
+
     console.log(COLORS.bright + '\n=== LLM设置 ===' + COLORS.reset);
     config.llmType = await promptWithValidation('请输入LLM类型', config.llmType);
-    
+
     const historyLengthInput = await promptWithValidation(
       '请输入历史上下文长度',
       config.historyLength.toString(),
@@ -371,7 +380,7 @@ async function runSetup() {
       '❌ 历史上下文长度必须是正整数'
     );
     config.historyLength = parseInt(historyLengthInput);
-    
+
     const timeoutInput = await promptWithValidation(
       '请输入LLM超时时间（秒）',
       config.timeout.toString(),
@@ -379,7 +388,7 @@ async function runSetup() {
       '❌ 超时时间必须是正整数'
     );
     config.timeout = parseInt(timeoutInput);
-    
+
     const streamingInput = await promptWithValidation(
       '是否启用流式响应? (是/否)',
       config.streaming ? '是' : '否',
@@ -387,14 +396,14 @@ async function runSetup() {
       '❌ 请输入 "是" 或 "否"'
     );
     config.streaming = streamingInput.toLowerCase() === '是';
-    
+
     config.systemPrompt = await promptWithValidation('请输入系统提示词', config.systemPrompt);
-    
+
     console.log(COLORS.bright + '\n=== TTS设置 ===' + COLORS.reset);
     config.ttsType = await promptWithValidation('请输入TTS提供商', config.ttsType);
     config.ttsApiUrl = await promptWithValidation('请输入TTS API URL', config.ttsApiUrl);
     config.ttsModel = await promptWithValidation('请输入TTS模型名称', config.ttsModel);
-    
+
     const ttsSpeedInput = await promptWithValidation(
       '请输入TTS语速',
       config.ttsSpeed.toString(),
@@ -402,14 +411,14 @@ async function runSetup() {
       '❌ 语速必须是正数'
     );
     config.ttsSpeed = parseFloat(ttsSpeedInput);
-    
+
     console.log(COLORS.bright + '\n=== 腾讯云设置 ===' + COLORS.reset);
     config.region = await promptWithValidation('请输入腾讯云区域', config.region);
 
     // Create directory structure if not exists
     const agentCardDir = path.join(__dirname, '..');
     const assetsDir = path.join(agentCardDir, 'assets');
-    
+
     try {
       if (!fs.existsSync(assetsDir)) {
         fs.mkdirSync(assetsDir, { recursive: true });
@@ -418,7 +427,7 @@ async function runSetup() {
 
       // Generate agent file
       const agentFilePath = path.join(agentCardDir, `${agentId}.js`);
-      
+
       // Check if file already exists
       if (fs.existsSync(agentFilePath)) {
         const overwrite = await promptWithValidation(
@@ -427,14 +436,14 @@ async function runSetup() {
           (val) => ['是', '否'].includes(val.toLowerCase()),
           '❌ 请输入 "是" 或 "否"'
         );
-        
+
         if (overwrite.toLowerCase() !== '是') {
           console.log(COLORS.yellow + '⚠️ 操作已取消，未生成助手配置文件' + COLORS.reset);
           rl.close();
           return;
         }
       }
-      
+
       fs.writeFileSync(agentFilePath, generateAgentTemplate(config));
       console.log(COLORS.green + `✅ 助手配置文件已创建: ${agentFilePath}` + COLORS.reset);
 
@@ -450,12 +459,10 @@ async function runSetup() {
       console.log(COLORS.bright + COLORS.green + '\n=== 创建完成 ===\n' + COLORS.reset);
       console.log(`您的助手 "${agentName}" 已成功配置，ID为 "${agentId}"。`);
       console.log(COLORS.cyan + '要启动服务器，请运行: npm start' + COLORS.reset);
-      
     } catch (error) {
       console.error(COLORS.red + '❌ 创建文件时出错:' + COLORS.reset, error.message);
       throw error;
     }
-    
   } catch (error) {
     console.error(COLORS.red + '❌ 设置过程中出错:' + COLORS.reset, error);
   } finally {

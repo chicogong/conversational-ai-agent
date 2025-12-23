@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRTC AI 转录翻译</title>
+    <link rel="icon" href="src/agent_cards/assets/star.ico" type="image/x-icon">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            margin: 0;
+            padding: 15px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .main-layout {
+            display: flex;
+            gap: 15px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .container {
+            flex: 1;
+            max-width: 700px;
+            background: rgba(255,255,255,0.95);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .debug-panel {
+            flex: 1;
+            max-width: 600px;
+            background: rgba(255,255,255,0.95);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .debug-header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e8f0ff;
+        }
+
+        .debug-header h2 {
+            color: #667eea;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .debug-output {
+            background: #1a202c;
+            border-radius: 12px;
+            padding: 15px;
+            min-height: 500px;
+            max-height: 600px;
+            color: white;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 12px;
+            line-height: 1.4;
+            overflow-y: auto;
+        }
+
+        .debug-message {
+            background: rgba(45, 55, 72, 0.8);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-left: 3px solid #667eea;
+        }
+
+        .debug-message.new-protocol {
+            border-left-color: #48bb78;
+        }
+
+        .debug-message.legacy-protocol {
+            border-left-color: #ed8936;
+        }
+
+        .debug-timestamp {
+            color: #a0aec0;
+            font-size: 10px;
+            margin-bottom: 5px;
+        }
+
+        .debug-protocol {
+            color: #4fd1c7;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .debug-content {
+            color: #e2e8f0;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .clear-debug {
+            background: #e53e3e;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-bottom: 15px;
+        }
+
+        .clear-debug:hover {
+            background: #c53030;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e8f0ff;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .status-item {
+            flex: 1;
+            text-align: center;
+            padding: 8px;
+            background: #f8f9ff;
+            border-radius: 8px;
+            border: 1px solid #e8f0ff;
+        }
+
+        .status-label {
+            font-size: 11px;
+            color: #667eea;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .status-value {
+            font-size: 12px;
+            font-weight: 600;
+            color: #333;
+            padding: 4px 8px;
+            border-radius: 12px;
+            background: white;
+        }
+
+        .status-value.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .config-section {
+            background: #f8f9ff;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .config-section h3 {
+            margin-bottom: 12px;
+            color: #667eea;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .form-group {
+            flex: 1;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 600;
+            color: #667eea;
+            font-size: 12px;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px 12px;
+            font-size: 13px;
+            border: 1px solid #e8f0ff;
+            border-radius: 8px;
+            background: white;
+            color: #333;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+        }
+
+        .toggle-button {
+            width: 100%;
+            padding: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #667eea;
+            color: white;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-button:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
+        }
+
+        .toggle-button.active {
+            background: #e53e3e;
+        }
+
+        .toggle-button.active:hover {
+            background: #c53030;
+        }
+
+        .toggle-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .output-section {
+            background: #1a202c;
+            border-radius: 12px;
+            padding: 15px;
+            min-height: 200px;
+            color: white;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            overflow-y: auto;
+            max-height: 400px;
+        }
+
+        .output-placeholder {
+            color: #a0aec0;
+            font-style: italic;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .subtitle-line {
+            background: rgba(102, 126, 234, 0.2);
+            border-left: 3px solid #667eea;
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 0 8px 8px 0;
+            animation: pulse 1s infinite;
+        }
+
+        .transcription-line {
+            background: rgba(45, 55, 72, 0.8);
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 8px;
+            border-left: 3px solid #4fd1c7;
+        }
+
+        .translation-line {
+            background: rgba(72, 187, 120, 0.2);
+            border-left: 3px solid #48bb78;
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .timestamp {
+            color: #a0aec0;
+            font-size: 11px;
+            margin-bottom: 3px;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout {
+                flex-direction: column;
+            }
+            .container, .debug-panel {
+                max-width: none;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .container, .debug-panel { padding: 15px; }
+            .form-row { flex-direction: column; }
+            .status-bar { flex-direction: column; }
+            .debug-output {
+                min-height: 300px;
+                max-height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <div class="container">
+            <div class="header">
+                <h1>🎙️ TRTC AI 转录翻译</h1>
+            </div>
+        
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="status-label">转录状态</div>
+                <div id="transcriptionStatus" class="status-value">未开始</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">房间状态</div>
+                <div id="roomStatus" class="status-value">未连接</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">翻译状态</div>
+                <div id="translationStatus" class="status-value">未启用</div>
+            </div>
+        </div>
+
+        <div class="config-section">
+            <h3>🎯 转录配置</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="transcriptionMode">转录模式</label>
+                    <select id="transcriptionMode">
+                        <option value="0">订阅整个房间</option>
+                        <option value="1">订阅单个用户</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="language">识别语言</label>
+                    <select id="language">
+                        <option value="zh">中文</option>
+                        <option value="en">英文</option>
+                        <option value="ja">日文</option>
+                        <option value="ko">韩文</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="translationLanguage">翻译语言</label>
+                    <select id="translationLanguage">
+                        <option value="">不翻译</option>
+                        <option value="zh">中文</option>
+                        <option value="en">英文</option>
+                        <option value="ja">日文</option>
+                        <option value="ko">韩文</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="maxIdleTime">空闲时间(秒)</label>
+                    <input type="number" id="maxIdleTime" value="60" min="10" max="3600">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="targetUserId">目标用户ID (仅单用户模式)</label>
+                <input type="text" id="targetUserId" placeholder="留空则订阅整个房间" disabled>
+            </div>
+        </div>
+
+        <button id="toggleBtn" class="toggle-button">🎙️ 开始转录</button>
+
+        <div class="config-section">
+            <h3>📝 转录输出</h3>
+            <div id="transcriptionOutput" class="output-section">
+                <div class="output-placeholder">等待转录开始...</div>
+            </div>
+        </div>
+        </div>
+        
+        <div class="debug-panel">
+            <div class="debug-header">
+                <h2>🐛 消息调试面板</h2>
+            </div>
+            <button class="clear-debug" onclick="clearDebugMessages()">清空消息</button>
+            <div id="debugOutput" class="debug-output">
+                <div class="output-placeholder">等待消息...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src='https://web.sdk.qcloud.com/trtc/webrtc/v5/dist/trtc.js'></script>
+    
+    <script>
+        // 全局变量
+        let isTranscribing = false;
+        let taskId = null;
+        let currentSubtitle = null; // 用于存储当前实时字幕
+        
+        const trtcState = { client: null, currentUserId: null, botUserId: null };
+        
+        // 支持的翻译语言配置
+        const SUPPORTED_LANGUAGES = [
+            { code: 'zh', name: '中文' },
+            { code: 'en', name: '英文' },
+            { code: 'ja', name: '日文' },
+            { code: 'ko', name: '韩文' },
+            { code: 'es', name: '西班牙文' },
+            { code: 'fr', name: '法文' },
+            { code: 'de', name: '德文' },
+            { code: 'ru', name: '俄文' },
+            { code: 'it', name: '意大利文' },
+            { code: 'pt', name: '葡萄牙文' },
+            { code: 'ar', name: '阿拉伯文' },
+            { code: 'th', name: '泰文' },
+            { code: 'vi', name: '越南文' },
+            { code: 'hi', name: '印地文' }
+        ];
+        
+        // 消息类型常量
+        const MESSAGE_TYPES = {
+            NEW_PROTOCOL: 10000,
+            STATUS: 10001,
+            SUBTITLE: 'subtitle',
+            TRANSCRIPTION: 'transcription',
+            TRANSLATE_SUBTITLE: 'translate_subtitle',
+            TRANSLATION: 'translation'
+        };
+        
+        /**
+         * 解析新协议消息 (type: 10000)
+         * 用于处理新版本的转录协议格式
+         * @param {Object} message - 原始消息对象
+         * @returns {Object} 标准化的消息对象
+         */
+        function parseNewProtocolMessage(message) {
+            const { sender, payload } = message;
+            const { result_type, text, translation_text, translation_language } = payload;
+            
+            return {
+                sender: sender,
+                text: text || '',
+                translationText: translation_text || '',
+                translationLanguage: translation_language || '',
+                resultType: result_type || '',
+                protocolVersion: 'new',
+                originalMessage: message
+            };
+        }
+        
+        /**
+         * 解析旧协议消息 (string type)
+         * 用于处理旧版本的转录协议格式
+         * @param {Object} message - 原始消息对象
+         * @returns {Object} 标准化的消息对象
+         */
+        function parseLegacyProtocolMessage(message) {
+            const { type, userid, text, translation_text, translation_language } = message;
+            
+            return {
+                sender: userid || 'unknown',
+                text: text || '',
+                translationText: translation_text || '',
+                translationLanguage: translation_language || '',
+                resultType: type || '',
+                protocolVersion: 'legacy',
+                originalMessage: message
+            };
+        }
+        
+        // 统一消息解析函数
+        function parseTranscriptionMessage(rawMessage) {
+            try {
+                // 检测协议类型
+                if (rawMessage.type === 10000) {
+                    // 新协议格式
+                    return parseNewProtocolMessage(rawMessage);
+                } else if (typeof rawMessage.type === 'string') {
+                    // 旧协议格式
+                    return parseLegacyProtocolMessage(rawMessage);
+                } else {
+                    console.warn('⚠️ 未知的协议格式:', rawMessage);
+                    return null;
+                }
+            } catch (error) {
+                console.error('❌ 协议解析失败:', error);
+                return null;
+            }
+        }
+        
+        // 获取语言显示名称
+        function getLanguageName(code) {
+            const lang = SUPPORTED_LANGUAGES.find(l => l.code === code);
+            return lang ? lang.name : code.toUpperCase();
+        }
+        
+        // DOM 元素
+        const toggleBtn = document.getElementById('toggleBtn');
+        const transcriptionStatus = document.getElementById('transcriptionStatus');
+        const roomStatus = document.getElementById('roomStatus');
+        const translationStatus = document.getElementById('translationStatus');
+        const transcriptionOutput = document.getElementById('transcriptionOutput');
+        const transcriptionModeSelect = document.getElementById('transcriptionMode');
+        const targetUserIdInput = document.getElementById('targetUserId');
+        
+        // 事件监听
+        transcriptionModeSelect.addEventListener('change', function() {
+            targetUserIdInput.disabled = this.value !== '1';
+            if (this.value !== '1') targetUserIdInput.value = '';
+        });
+
+        // API请求函数
+        async function apiRequest(endpoint, data, method = "POST") {
+            const response = await fetch(`${window.location.origin}${endpoint}`, {
+                method,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            });
+            if (!response.ok) throw new Error(`API error: ${response.status}`);
+            return await response.json();
+        }
+        
+        // TRTC 房间管理
+        async function enterTRTCRoom(params) {
+            const client = trtcState.client = TRTC.create();
+            await client.enterRoom({
+                roomId: parseInt(params.roomId),
+                scene: "rtc",
+                sdkAppId: params.sdkAppId,
+                userId: params.userId,
+                userSig: params.userSig,
+            });
+            
+            client.on(TRTC.EVENT.CUSTOM_MESSAGE, handleTRTCMessage);
+            await client.startLocalAudio();
+            return client;
+        }
+
+        async function exitTRTCRoom() {
+            if (trtcState.client) {
+                await trtcState.client.exitRoom();
+                trtcState.client.destroy();
+                trtcState.client = null;
+            }
+        }
+        
+        // 处理TRTC消息 - 统一入口
+        function handleTRTCMessage(event) {
+            try {
+                const rawMessage = JSON.parse(new TextDecoder().decode(event.data));
+                console.log('📨 TRTC原始消息:', rawMessage);
+                
+                // 添加到debug面板
+                addDebugMessage(rawMessage);
+                
+                // 使用统一解析函数
+                const parsedMessage = parseTranscriptionMessage(rawMessage);
+                if (!parsedMessage) {
+                    console.warn('⚠️ 无法解析的消息格式:', rawMessage);
+                    return;
+                }
+                
+                console.log('📋 解析后消息:', parsedMessage);
+                
+                // 统一处理逻辑
+                handleParsedMessage(parsedMessage);
+                
+            } catch (error) {
+                console.error('❌ 消息处理失败:', error);
+            }
+        }
+        
+        // 添加debug消息到面板
+        function addDebugMessage(rawMessage) {
+            const debugOutput = document.getElementById('debugOutput');
+            
+            // 移除占位符
+            const placeholder = debugOutput.querySelector('.output-placeholder');
+            if (placeholder) {
+                placeholder.remove();
+            }
+            
+            // 检测协议类型
+            let protocolType = 'unknown';
+            let protocolClass = '';
+            
+            if (rawMessage.type === 10000) {
+                protocolType = '新协议 (type: 10000)';
+                protocolClass = 'new-protocol';
+            } else if (typeof rawMessage.type === 'string') {
+                protocolType = `旧协议 (type: "${rawMessage.type}")`;
+                protocolClass = 'legacy-protocol';
+            }
+            
+            // 创建debug消息元素
+            const messageElement = document.createElement('div');
+            messageElement.className = `debug-message ${protocolClass}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            const messageContent = JSON.stringify(rawMessage, null, 2);
+            
+            messageElement.innerHTML = `
+                <div class="debug-timestamp">${timestamp}</div>
+                <div class="debug-protocol">${protocolType}</div>
+                <div class="debug-content">${messageContent}</div>
+            `;
+            
+            debugOutput.appendChild(messageElement);
+            debugOutput.scrollTop = debugOutput.scrollHeight;
+            
+            // 限制消息数量，保留最新的50条
+            const messages = debugOutput.querySelectorAll('.debug-message');
+            if (messages.length > 50) {
+                messages[0].remove();
+            }
+        }
+        
+        // 清空debug消息
+        function clearDebugMessages() {
+            const debugOutput = document.getElementById('debugOutput');
+            debugOutput.innerHTML = '<div class="output-placeholder">等待消息...</div>';
+        }
+        
+        // 处理解析后的消息
+        function handleParsedMessage(message) {
+            const { sender, text, translationText, translationLanguage, resultType } = message;
+            
+            // 如果没有明确的结果类型但有文本，默认为实时字幕
+            if (!resultType && text) {
+                updateSubtitle(sender, text);
+                return;
+            }
+            
+            // 根据结果类型处理消息
+            switch (resultType) {
+                case MESSAGE_TYPES.SUBTITLE:
+                    if (text) {
+                        updateSubtitle(sender, text, '', false);
+                    }
+                    break;
+                    
+                case MESSAGE_TYPES.TRANSCRIPTION:
+                    if (text) {
+                        addTranscription(sender, text, message);
+                    }
+                    break;
+                    
+                case MESSAGE_TYPES.TRANSLATE_SUBTITLE:
+                    if (translationText) {
+                        const langName = getLanguageName(translationLanguage);
+                        updateSubtitle(sender, translationText, langName, true);
+                    }
+                    break;
+                    
+                case MESSAGE_TYPES.TRANSLATION:
+                    if (translationText) {
+                        const langName = getLanguageName(translationLanguage);
+                        addTranslation(sender, text, translationText, langName, message);
+                    }
+                    break;
+                    
+                default:
+                    console.warn('⚠️ 未知的消息类型:', resultType);
+            }
+        }
+
+        // UI 更新函数
+        function updateStatus(element, text, isActive = false) {
+            element.textContent = text;
+            element.classList.toggle('active', isActive);
+        }
+
+        function clearOutput() {
+            transcriptionOutput.innerHTML = '<div class="output-placeholder">等待转录开始...</div>';
+            currentSubtitle = null;
+        }
+
+        function ensureOutputReady() {
+            if (transcriptionOutput.querySelector('.output-placeholder')) {
+                transcriptionOutput.innerHTML = '';
+            }
+        }
+
+        // 更新实时字幕（可刷新）
+        function updateSubtitle(sender, text, language = '', isTranslation = false) {
+            ensureOutputReady();
+            
+            const subtitleId = `subtitle-${sender}-${isTranslation ? 'trans' : 'orig'}`;
+            let subtitleElement = document.getElementById(subtitleId);
+            
+            if (!subtitleElement) {
+                subtitleElement = document.createElement('div');
+                subtitleElement.id = subtitleId;
+                subtitleElement.className = 'subtitle-line';
+                transcriptionOutput.appendChild(subtitleElement);
+            }
+            
+            const prefix = isTranslation && language ? `[实时翻译-${language}]` : '[实时]';
+            subtitleElement.innerHTML = `
+                <div class="timestamp">${new Date().toLocaleTimeString()}</div>
+                <div>${prefix} ${sender}: ${text}</div>
+            `;
+            
+            transcriptionOutput.scrollTop = transcriptionOutput.scrollHeight;
+        }
+
+        // 添加最终转录结果
+        function addTranscription(sender, text, originalMessage = null) {
+            ensureOutputReady();
+            
+            // 移除对应的实时字幕
+            const subtitleElement = document.getElementById(`subtitle-${sender}-orig`);
+            if (subtitleElement) subtitleElement.remove();
+            
+            const element = document.createElement('div');
+            element.className = 'transcription-line';
+            
+            // 添加调试信息
+            const debugInfo = originalMessage ? 
+                `<small class="debug-info" style="color: #a0aec0; font-size: 0.8em; margin-top: 4px; display: block;">协议: ${originalMessage.protocol || 'legacy'}</small>` : '';
+            
+            element.innerHTML = `
+                <div class="timestamp">${new Date().toLocaleTimeString()}</div>
+                <div>[转录] ${sender}: ${text}</div>
+                ${debugInfo}
+            `;
+            
+            transcriptionOutput.appendChild(element);
+            transcriptionOutput.scrollTop = transcriptionOutput.scrollHeight;
+        }
+
+        // 添加翻译结果
+        function addTranslation(sender, originalText, translationText, language, originalMessage = null) {
+            ensureOutputReady();
+            
+            // 移除对应的实时翻译字幕
+            const subtitleElement = document.getElementById(`subtitle-${sender}-trans`);
+            if (subtitleElement) subtitleElement.remove();
+            
+            if (originalText) {
+                const origElement = document.createElement('div');
+                origElement.className = 'transcription-line';
+                origElement.innerHTML = `
+                    <div class="timestamp">${new Date().toLocaleTimeString()}</div>
+                    <div>[原文] ${sender}: ${originalText}</div>
+                `;
+                transcriptionOutput.appendChild(origElement);
+            }
+            
+            const transElement = document.createElement('div');
+            transElement.className = 'translation-line';
+            
+            // 添加调试信息
+            const debugInfo = originalMessage ? 
+                `<small class="debug-info" style="color: #a0aec0; font-size: 0.8em; margin-top: 4px; display: block;">协议: ${originalMessage.protocol || 'legacy'} | 语言代码: ${originalMessage.translationLanguage || 'unknown'}</small>` : '';
+            
+            transElement.innerHTML = `
+                <div class="timestamp">${new Date().toLocaleTimeString()}</div>
+                <div>[翻译-${language}] ${sender}: ${translationText}</div>
+                ${debugInfo}
+            `;
+            
+            transcriptionOutput.appendChild(transElement);
+            transcriptionOutput.scrollTop = transcriptionOutput.scrollHeight;
+        }
+
+        // 表单验证
+        function validateForm() {
+            const maxIdleTime = parseInt(document.getElementById('maxIdleTime').value);
+            if (maxIdleTime < 10 || maxIdleTime > 3600) {
+                alert('最大空闲时间必须在10-3600秒之间');
+                return false;
+            }
+            return true;
+        }
+
+        // 开始转录
+        async function startTranscription() {
+            if (!validateForm()) return;
+
+            try {
+                updateStatus(transcriptionStatus, '启动中...');
+                clearOutput();
+                toggleBtn.disabled = true;
+
+                // 获取凭据
+                const credentials = await apiRequest('/credentials', { agentId: 'default' });
+                const roomId = Math.floor(Math.random() * 10000000) + 1000000;
+                
+                // 构建请求参数
+                const transcriptionParams = {
+                    UserId: credentials.robotId,
+                    UserSig: credentials.robotSig,
+                    MaxIdleTime: parseInt(document.getElementById('maxIdleTime').value),
+                    TranscriptionMode: parseInt(document.getElementById('transcriptionMode').value)
+                };
+                
+                const targetUserId = document.getElementById('targetUserId').value.trim();
+                if (transcriptionParams.TranscriptionMode === 1 && targetUserId) {
+                    transcriptionParams.TargetUserId = targetUserId;
+                }
+                
+                const data = {
+                    SdkAppId: parseInt(credentials.sdkAppId),
+                    RoomId: roomId,
+                    TranscriptionParams: transcriptionParams,
+                    RecognizeConfig: {
+                        Language: document.getElementById('language').value
+                    },
+                    agent: "default"
+                };
+                
+                const translationLanguage = document.getElementById('translationLanguage').value;
+                if (translationLanguage) {
+                    data.RecognizeConfig.TranslationLanguage = translationLanguage;
+                }
+
+                console.log('🚀 Starting transcription:', data);
+                const result = await apiRequest('/start-transcription', data);
+                
+                isTranscribing = true;
+                taskId = result.TaskId;
+                trtcState.currentUserId = credentials.userId;
+                trtcState.botUserId = result.userInfo?.robotId || credentials.robotId;
+                
+                // 进入TRTC房间
+                await enterTRTCRoom({
+                    roomId: roomId,
+                    sdkAppId: credentials.sdkAppId,
+                    userId: credentials.userId,
+                    userSig: credentials.userSig
+                });
+                
+                updateStatus(transcriptionStatus, '转录中', true);
+                updateStatus(roomStatus, '已连接', true);
+                updateStatus(translationStatus, translationLanguage ? '已启用' : '未启用', !!translationLanguage);
+                
+                transcriptionOutput.innerHTML = '<div class="output-placeholder">转录服务已启动，正在监听语音输入...</div>';
+                
+                toggleBtn.textContent = '🛑 停止转录';
+                toggleBtn.classList.add('active');
+                toggleBtn.disabled = false;
+            } catch (error) {
+                console.error('启动失败:', error);
+                updateStatus(transcriptionStatus, '启动失败');
+                transcriptionOutput.innerHTML = `<div class="output-placeholder">启动失败: ${error.message}</div>`;
+                toggleBtn.disabled = false;
+            }
+        }
+
+        // 停止转录
+        async function stopTranscription() {
+            if (!isTranscribing || !taskId) return;
+
+            try {
+                updateStatus(transcriptionStatus, '停止中...');
+                toggleBtn.disabled = true;
+
+                // 调用停止转录API
+                await apiRequest('/stop-transcription', { 
+                    TaskId: taskId,
+                    agent: 'default'
+                });
+                
+                await exitTRTCRoom();
+                
+                isTranscribing = false;
+                taskId = null;
+                
+                updateStatus(transcriptionStatus, '已停止');
+                updateStatus(roomStatus, '未连接');
+                updateStatus(translationStatus, '未启用');
+                
+                transcriptionOutput.innerHTML = '<div class="output-placeholder">转录服务已停止</div>';
+                
+                toggleBtn.textContent = '🎙️ 开始转录';
+                toggleBtn.classList.remove('active');
+                toggleBtn.disabled = false;
+            } catch (error) {
+                console.error('停止失败:', error);
+                updateStatus(transcriptionStatus, '停止失败');
+                toggleBtn.disabled = false;
+            }
+        }
+
+        // 事件绑定
+        toggleBtn.addEventListener('click', () => {
+            if (isTranscribing) {
+                stopTranscription();
+            } else {
+                startTranscription();
+            }
+        });
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            updateStatus(transcriptionStatus, '未开始');
+            updateStatus(roomStatus, '未连接');
+            updateStatus(translationStatus, '未启用');
+        });
+    </script>
+</body>
+</html>

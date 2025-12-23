@@ -1,4 +1,23 @@
-.idea
-node_modules
-package-lock.json
+# Dependencies
+node_modules/
+
+# Environment
 .env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+
+# Local files
+deploy.sh
+CLAUDE.md
+.claude/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store

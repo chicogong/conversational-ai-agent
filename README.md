@@ -32,16 +32,19 @@ Conversationsal AI Agent 是一个快速 AI 应用构建平台，让您轻松打
 ## 💯 核心亮点
 
 ### 体验优化
+
 - ✅ **自然交互**：支持语义断句、自然停顿和思考时间
 - ✅ **环境适应**：声纹识别技术支持嘈杂环境下的对话，有效过滤背景人声
 - ✅ **真实感提升**：支持环境音模拟，增强对话真实感
 
 ### 技术优化
+
 - ⚡ **响应速度**：采用分句策略实现首句快速返回，欢迎语预请求降低耗时
 - 🔊 **语音质量**：服务端噪声过滤，ASR降噪参数优化
 - 🤝 **交互体验**：智能附和语增加拟人化交互，VAD打断优化，单字过滤减少误打断
 
 ### 高级功能
+
 - 📊 **服务端回调**：支持延迟统计、内容审核、通话记录存储
 - 📱 **客户端回调**：实时字幕展示、状态展示、异常处理、通话统计
 
@@ -54,6 +57,7 @@ Conversationsal AI Agent 是一个快速 AI 应用构建平台，让您轻松打
 </div>
 
 ### 主要组件
+
 - **语音输入处理**：包含ASR语音识别、AI VAD、声纹识别和情感识别等模块
 - **AI生成服务**：支持LLM、LLM+RAG、MCP、A2A、Dify、知识引擎等多种生成方式
 - **语音输出处理**：采用拟人化实时TTS技术，提供高质量的语音合成
@@ -66,16 +70,16 @@ Conversationsal AI Agent 是一个快速 AI 应用构建平台，让您轻松打
 
 <div align="center">
 
-| Agent 类型 | 核心功能 | 适用场景 | 实现状态 |
-|------------|---------|---------|---------|
-| 外呼客服 Agent | 自动外呼、智能话术、质量监控 | 营销、客服回访 | ✅ 已实现 |
-| 甜妹陪聊 Agent | 自然交互、情感超拟人对话、个性化陪伴 | 社交、娱乐 | ✅ 已实现 |
-| 声纹锁定 Agent | 声纹锁定、过滤周边人声、保证高质量通话 | 办公室，街道等嘈杂场景 | ✅ 已实现 |
-| MCP Agent | 接入[MCP](https://github.com/modelcontextprotocol)扩展工具调用等功能 | 更便捷的工具调用 | ✅ 已实现 |
-| A2A Agent | 接入[A2A](https://github.com/google/A2A)协议 | 多Agent对话 | 🔄 开发中 |
-| Coze Agent | 接入 [Coze](https://www.coze.com) 平台能力 | 快速构建智能对话应用 | 🔄 开发中 |
-| Dify Agent | 接入 [Dify](https://dify.ai) 平台能力 | 企业级 AI 应用开发 | 🔄 开发中 |
-| 知识引擎 Agent | 接入[腾讯云知识引擎](https://cloud.tencent.com/product/lke) 企业级知识库解决方案 | 智能问答、知识库查询 | 🔄 开发中 |
+| Agent 类型     | 核心功能                                                                         | 适用场景               | 实现状态  |
+| -------------- | -------------------------------------------------------------------------------- | ---------------------- | --------- |
+| 外呼客服 Agent | 自动外呼、智能话术、质量监控                                                     | 营销、客服回访         | ✅ 已实现 |
+| 甜妹陪聊 Agent | 自然交互、情感超拟人对话、个性化陪伴                                             | 社交、娱乐             | ✅ 已实现 |
+| 声纹锁定 Agent | 声纹锁定、过滤周边人声、保证高质量通话                                           | 办公室，街道等嘈杂场景 | ✅ 已实现 |
+| MCP Agent      | 接入[MCP](https://github.com/modelcontextprotocol)扩展工具调用等功能             | 更便捷的工具调用       | ✅ 已实现 |
+| A2A Agent      | 接入[A2A](https://github.com/google/A2A)协议                                     | 多Agent对话            | 🔄 开发中 |
+| Coze Agent     | 接入 [Coze](https://www.coze.com) 平台能力                                       | 快速构建智能对话应用   | 🔄 开发中 |
+| Dify Agent     | 接入 [Dify](https://dify.ai) 平台能力                                            | 企业级 AI 应用开发     | 🔄 开发中 |
+| 知识引擎 Agent | 接入[腾讯云知识引擎](https://cloud.tencent.com/product/lke) 企业级知识库解决方案 | 智能问答、知识库查询   | 🔄 开发中 |
 
 </div>
 如果需要某个Agent可以留言，我们会尽快为您提供。
@@ -100,6 +104,7 @@ cp env.example .env
 ```
 
 主要环境变量包括：
+
 - 腾讯云API凭证（TENCENT_SECRET_ID, TENCENT_SECRET_KEY）：从[腾讯云 API 密钥](https://console.cloud.tencent.com/cam/capi)获取
 - TRTC配置（TRTC_SDK_APP_ID, TRTC_SECRET_KEY）：从[TRTC 控制台](https://console.cloud.tencent.com/trtc/app)获取
 - LLM配置（LLM_API_KEY, LLM_API_URL, LLM_MODEL）：从您的 LLM 服务提供商获取
@@ -122,7 +127,6 @@ npm run create
 ```bash
 npm start
 ```
-
 
 ## 🛠️ 自定义Agent配置
 
@@ -190,11 +194,10 @@ conversational-ai-agent/
 - 问题反馈：[GitHub Issues](https://github.com/yourusername/trtc-ai-build-quickly/issues)
 - 提交工单：[提交工单](https://cloud.tencent.com/online-service?from=doc_647)
 
-## 🙏 
+## 🙏
 
 感谢您使用Conversationsal AI Agent !!
 
 <div align="center">
   <sub>Built with ❤️ by chico</sub>
 </div>
-

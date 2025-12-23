@@ -4,17 +4,17 @@
 
 // DOM Elements - Cache selectors for performance
 const elements = {
-  chatList: document.querySelector(".chat-list"),
-  startButton: document.getElementById("start-button"),
-  endButton: document.getElementById("end-button"),
-  textInput: document.getElementById("text-input"),
-  sendButton: document.getElementById("send-button"),
-  interruptButton: document.getElementById("interrupt-button"),
-  muteButton: document.getElementById("mute-button"),
+  chatList: document.querySelector('.chat-list'),
+  startButton: document.getElementById('start-button'),
+  endButton: document.getElementById('end-button'),
+  textInput: document.getElementById('text-input'),
+  sendButton: document.getElementById('send-button'),
+  interruptButton: document.getElementById('interrupt-button'),
+  muteButton: document.getElementById('mute-button'),
   statusElements: {
     ai: document.getElementById('ai-state'),
-    room: document.getElementById('room-status')
-  }
+    room: document.getElementById('room-status'),
+  },
 };
 
 // Chat messages array
@@ -26,16 +26,16 @@ let messages = [];
 function renderChatMessages() {
   const fragment = document.createDocumentFragment();
 
-  messages.forEach(message => {
-    const messageElement = document.createElement("div");
-    messageElement.classList.add("chat-item", message.type);
+  messages.forEach((message) => {
+    const messageElement = document.createElement('div');
+    messageElement.classList.add('chat-item', message.type);
 
-    const senderElement = document.createElement("div");
-    senderElement.classList.add("chat-id");
+    const senderElement = document.createElement('div');
+    senderElement.classList.add('chat-id');
     senderElement.textContent = message.sender;
 
-    const contentElement = document.createElement("div");
-    contentElement.classList.add("chat-text");
+    const contentElement = document.createElement('div');
+    contentElement.classList.add('chat-text');
     contentElement.textContent = message.content;
 
     messageElement.appendChild(senderElement);
@@ -43,7 +43,7 @@ function renderChatMessages() {
     fragment.appendChild(messageElement);
   });
 
-  elements.chatList.innerHTML = "";
+  elements.chatList.innerHTML = '';
   elements.chatList.appendChild(fragment);
 }
 
@@ -70,7 +70,7 @@ function updateStatus(type, statusText) {
  * @param {boolean} end - Whether this is the end of the message
  */
 function addMessage(sender, content, type, id, end = true) {
-  const existingIndex = messages.findIndex(msg => msg.id === id && msg.sender === sender);
+  const existingIndex = messages.findIndex((msg) => msg.id === id && msg.sender === sender);
 
   if (existingIndex !== -1) {
     messages[existingIndex].content = content;
@@ -81,7 +81,7 @@ function addMessage(sender, content, type, id, end = true) {
       content,
       sender,
       type,
-      end
+      end,
     });
   }
 
@@ -96,20 +96,20 @@ function addMessage(sender, content, type, id, end = true) {
 function addSystemMessage(content, isHTML = false) {
   const chatItem = document.createElement('div');
   chatItem.className = 'chat-item ai';
-  
+
   const chatId = document.createElement('div');
   chatId.className = 'chat-id';
   chatId.textContent = 'System';
-  
+
   const chatText = document.createElement('div');
   chatText.className = 'chat-text';
-  
+
   if (isHTML) {
     chatText.innerHTML = content;
   } else {
     chatText.textContent = content;
   }
-  
+
   chatItem.appendChild(chatId);
   chatItem.appendChild(chatText);
   elements.chatList.insertBefore(chatItem, elements.chatList.firstChild);
@@ -123,6 +123,19 @@ function resetUI() {
   elements.endButton.disabled = true;
   elements.sendButton.disabled = true;
   elements.interruptButton.disabled = true;
-  updateStatus('room', "Disconnected");
-  updateStatus('ai', "AI NotReady");
-} 
+  updateStatus('room', 'Disconnected');
+  updateStatus('ai', 'AI NotReady');
+}
+
+/**
+ * Get conversation messages for analysis
+ * @returns {Array} Array of conversation messages
+ */
+function getConversationMessages() {
+  return messages.map((msg) => ({
+    id: msg.id,
+    content: msg.content,
+    sender: msg.sender,
+    type: msg.type,
+  }));
+}
