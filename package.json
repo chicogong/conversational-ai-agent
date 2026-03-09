@@ -19,7 +19,7 @@
     "express": "^5.1.0",
     "morgan": "^1.10.0",
     "openai": "^5.1.1",
-    "tencentcloud-sdk-nodejs-trtc": "^4.1.123",
+    "tencentcloud-sdk-nodejs-trtc": "^4.1.190",
     "tls-sig-api-v2": "^1.0.2"
   },
   "devDependencies": {
